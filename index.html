@@ -1,0 +1,2795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>异世界重开模拟器</title>
+
+<!-- PWA: 安装到主屏幕/桌面所需的清单与图标 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f0c22">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="异世界重开">
+<meta name="mobile-web-app-capable" content="yes">
+
+<style>
+  :root{
+    --bg-0:#0f0c22;
+    --bg-1:#171233;
+    --panel:#221a45;
+    --panel-2:#2b2154;
+    --line: rgba(216,178,106,0.18);
+    --text:#ece4ff;
+    --text-dim:#a99bd6;
+    --gold:#d8b26a;
+    --violet:#9075e0;
+    --danger:#e0615c;
+    --success:#6fd9a0;
+    --font-display:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+    --font-body:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(144,117,224,0.25), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgba(216,178,106,0.12), transparent 55%),
+      linear-gradient(180deg, var(--bg-0), var(--bg-1) 60%, var(--bg-0));
+    color:var(--text);
+    font-family:var(--font-body);
+    display:flex;
+    justify-content:center;
+    padding:28px 16px 60px;
+  }
+  #app{width:100%;max-width:720px;}
+
+  /* 顶部纹样 */
+  .rune-divider{
+    display:flex;align-items:center;gap:10px;
+    color:var(--gold); opacity:.85; margin:0 0 18px;
+    font-size:12px; letter-spacing:.3em;
+  }
+  .rune-divider::before,.rune-divider::after{
+    content:"";flex:1;height:1px;
+    background:linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  h1.title{
+    font-family:var(--font-display);
+    text-align:center;
+    font-size:34px;
+    letter-spacing:.12em;
+    margin:4px 0 2px;
+    background:linear-gradient(180deg,#f2e2b8,var(--gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 2px 24px rgba(216,178,106,0.25);
+  }
+  .subtitle{
+    text-align:center;color:var(--text-dim);font-size:13px;
+    letter-spacing:.05em; margin-bottom:22px;
+  }
+
+  /* 命书卡片 */
+  .scroll{
+    position:relative;
+    background:linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:26px 24px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03);
+    margin-bottom:18px;
+  }
+  .scroll::before, .scroll::after{
+    content:"◆";
+    position:absolute; color:var(--gold); opacity:.5; font-size:10px;
+  }
+  .scroll::before{top:10px;left:12px;}
+  .scroll::after{top:10px;right:12px;}
+
+  .section-label{
+    font-family:var(--font-display);
+    color:var(--gold); font-size:15px; letter-spacing:.15em;
+    margin:0 0 14px; display:flex; align-items:center; gap:8px;
+  }
+  .section-label .idx{
+    font-size:11px;color:var(--text-dim);border:1px solid var(--line);
+    padding:1px 7px;border-radius:20px;
+  }
+
+  p, .desc{color:var(--text-dim); line-height:1.7; font-size:14px;}
+
+  /* 按钮 */
+  .btn{
+    font-family:var(--font-body);
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:11px 20px;
+    border-radius:9px;
+    font-size:14px;
+    cursor:pointer;
+    transition:transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover{border-color:var(--gold); box-shadow:0 0 0 1px rgba(216,178,106,0.25);}
+  .btn:active{transform:scale(.97);}
+  .btn.primary{
+    background:linear-gradient(180deg,#e9c98a,var(--gold));
+    color:#241a09; border:none; font-weight:600;
+  }
+  .btn.primary:hover{box-shadow:0 6px 20px rgba(216,178,106,0.35);}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:18px;}
+  .btn-row.center{justify-content:center;}
+
+  /* 转生方式 / 天赋 卡片 */
+  .card-grid{display:grid; gap:12px;}
+  .pick-card{
+    border:1px solid var(--line);
+    background:rgba(255,255,255,0.02);
+    border-radius:11px;
+    padding:16px 16px;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease, transform .15s ease;
+  }
+  .pick-card:hover{border-color:var(--violet); background:rgba(144,117,224,0.08); transform:translateY(-1px);}
+  .pick-card.selected{border-color:var(--gold); background:rgba(216,178,106,0.10);}
+  .pick-card h3{margin:0 0 6px; font-family:var(--font-display); font-size:16px; color:var(--text);}
+  .pick-card p{margin:0; font-size:13px;}
+  .tag-row{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
+  .mod-tag{
+    font-size:11px; padding:2px 8px; border-radius:20px;
+    border:1px solid var(--line); color:var(--text-dim);
+  }
+  .mod-tag.pos{color:var(--success); border-color:rgba(111,217,160,0.35);}
+  .mod-tag.neg{color:var(--danger); border-color:rgba(224,97,92,0.35);}
+
+  .rarity-badge{
+    font-size:11px; padding:2px 9px; border-radius:20px; font-weight:600;
+    display:inline-block; margin-bottom:8px; letter-spacing:.05em;
+  }
+  .rarity-legendary{background:rgba(216,178,106,0.15); color:var(--gold); border:1px solid rgba(216,178,106,0.4);}
+  .rarity-epic{background:rgba(144,117,224,0.15); color:#b9a4ff; border:1px solid rgba(144,117,224,0.4);}
+  .rarity-rare{background:rgba(97,168,224,0.15); color:#8fc4f2; border:1px solid rgba(97,168,224,0.4);}
+  .rarity-common{background:rgba(111,217,160,0.12); color:var(--success); border:1px solid rgba(111,217,160,0.35);}
+  .rarity-flaw{background:rgba(224,97,92,0.12); color:var(--danger); border:1px solid rgba(224,97,92,0.35);}
+
+  .chosen-strip{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;}
+  .chosen-chip{
+    font-size:12px; padding:5px 12px; border-radius:20px;
+    border:1px solid var(--gold); color:var(--gold); background:rgba(216,178,106,0.08);
+  }
+  .chosen-chip.empty{color:var(--text-dim); border-color:var(--line); background:none;}
+
+  /* 属性分配 */
+  .stat-row{
+    display:flex; align-items:center; gap:12px;
+    padding:10px 0; border-bottom:1px dashed var(--line);
+  }
+  .stat-row:last-child{border-bottom:none;}
+  .stat-name{width:64px; font-size:14px; color:var(--text); flex-shrink:0;}
+  .stat-bar{
+    flex:1; height:9px; border-radius:6px; background:rgba(255,255,255,0.06);
+    overflow:hidden; position:relative;
+  }
+  .stat-bar-fill{height:100%; border-radius:6px; background:linear-gradient(90deg,var(--violet),var(--gold));}
+  .stat-num{width:28px; text-align:right; font-family:var(--font-display); color:var(--gold); font-size:15px;}
+  .stat-ctrl{display:flex; gap:4px;}
+  .stat-ctrl button{
+    width:26px;height:26px;border-radius:6px;border:1px solid var(--line);
+    background:var(--panel-2); color:var(--text); cursor:pointer; font-size:14px; line-height:1;
+  }
+  .stat-ctrl button:disabled{opacity:.3;cursor:not-allowed;}
+  .stat-cost-hint{
+    width:66px; flex-shrink:0; text-align:right;
+    font-size:11px; color:var(--text-dim); opacity:.75;
+  }
+
+  .budget-line{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:14px; font-size:13px; color:var(--text-dim);
+  }
+  .budget-line b{color:var(--gold); font-size:16px; font-family:var(--font-display);}
+
+  /* 罗盘 */
+  .compass-wrap{display:flex; justify-content:center; margin:6px 0 16px;}
+
+  /* 模拟日志 */
+  .status-bar{
+    display:flex; flex-wrap:wrap; gap:6px;
+    margin-bottom:14px; padding:10px 12px;
+    background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:10px;
+  }
+  .status-chip{
+    display:flex; align-items:baseline; gap:4px;
+    font-size:11px; padding:3px 9px; border-radius:20px;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--text-dim);
+  }
+  .status-value{font-family:var(--font-display); font-size:13px; color:var(--gold); font-weight:600;}
+
+  .log-wrap{max-height:420px; overflow-y:auto; padding-right:4px;}
+  .log-wrap::-webkit-scrollbar{width:6px;}
+  .log-wrap::-webkit-scrollbar-thumb{background:var(--panel-2); border-radius:3px;}
+  .log-entry{
+    display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--line);
+    animation:fadeIn .35s ease;
+  }
+  .log-entry:last-child{border-bottom:none;}
+  .log-age{
+    flex-shrink:0; width:52px; text-align:right; font-family:var(--font-display);
+    color:var(--gold); font-size:13px; padding-top:1px;
+  }
+  .log-text{font-size:14px; line-height:1.65; color:var(--text);}
+  .log-text.death{color:var(--danger);}
+  .log-text.milestone{color:var(--gold);}
+  .log-text.fortune{color:var(--success);}
+  .log-text.misfortune{color:#e0a15c;}
+  .log-text.choice{color:var(--violet); font-weight:600;}
+
+  .choice-panel{
+    border:1px solid var(--violet); border-radius:11px;
+    background:rgba(144,117,224,0.08); padding:14px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .choice-hint{
+    font-size:12px; color:#b9a4ff; text-align:center;
+    letter-spacing:.1em; margin-bottom:4px;
+  }
+  .choice-option{
+    width:100%; text-align:left; background:var(--panel-2);
+    border:1px solid var(--line); padding:11px 14px;
+  }
+  .choice-option:hover{border-color:var(--violet);}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+
+  .progress-line{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:12px; color:var(--text-dim); margin-bottom:12px;
+  }
+  .speed-toggle{display:flex; gap:6px;}
+  .speed-toggle button{
+    font-size:11px; padding:4px 10px; border-radius:20px; border:1px solid var(--line);
+    background:none; color:var(--text-dim); cursor:pointer;
+  }
+  .speed-toggle button.active{border-color:var(--gold); color:var(--gold);}
+
+  /* 结局 */
+  .ending-title{
+    text-align:center; font-family:var(--font-display); font-size:26px;
+    color:var(--gold); margin:6px 0 4px;
+  }
+  .ending-sub{text-align:center; color:var(--text-dim); font-size:13px; margin-bottom:18px;}
+  .score-box{
+    display:flex; justify-content:center; align-items:baseline; gap:8px; margin-bottom:20px;
+  }
+  .score-num{font-family:var(--font-display); font-size:44px; color:var(--gold);}
+  .score-label{font-size:12px; color:var(--text-dim);}
+  .achieve-list{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 4px;}
+  .achieve-chip{
+    font-size:12px; padding:4px 11px; border-radius:20px;
+    border:1px solid rgba(144,117,224,0.4); color:#b9a4ff; background:rgba(144,117,224,0.08);
+  }
+
+  .footer-note{text-align:center; color:var(--text-dim); font-size:11px; margin-top:22px; letter-spacing:.05em;}
+
+  /* 成就殿堂 */
+  .achieve-summary{
+    text-align:center; color:var(--gold); font-family:var(--font-display);
+    font-size:15px; margin-bottom:16px; letter-spacing:.05em;
+  }
+  .achieve-card{
+    display:flex; align-items:flex-start; gap:12px;
+    border:1px solid var(--line); border-radius:11px;
+    padding:13px 14px; margin-bottom:10px;
+    background:rgba(255,255,255,0.02);
+  }
+  .achieve-card.unlocked{border-color:rgba(216,178,106,0.45); background:rgba(216,178,106,0.06);}
+  .achieve-icon{
+    flex-shrink:0; width:34px; height:34px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; border:1px solid var(--line); background:var(--panel-2);
+  }
+  .achieve-card.unlocked .achieve-icon{
+    border-color:var(--gold); color:var(--gold); background:rgba(216,178,106,0.12);
+  }
+  .achieve-card.locked .achieve-icon{ color:var(--text-dim); opacity:.6; }
+  .achieve-body{flex:1;}
+  .achieve-name{font-size:14px; color:var(--text); font-weight:600; margin-bottom:2px;}
+  .achieve-card.locked .achieve-name{color:var(--text-dim);}
+  .achieve-desc{font-size:12px; color:var(--text-dim); line-height:1.5;}
+  .achieve-progress{font-size:11px; color:var(--gold); margin-top:4px;}
+
+  .new-unlock-banner{
+    border:1px solid var(--gold); border-radius:10px;
+    background:rgba(216,178,106,0.1); padding:12px 14px;
+    margin-bottom:16px; font-size:13px; color:var(--gold); text-align:center;
+  }
+
+  @media (max-width:480px){
+    h1.title{font-size:26px;}
+    .scroll{padding:18px 16px;}
+    .stat-name{width:52px; font-size:13px;}
+    .stat-row{flex-wrap:wrap; row-gap:6px;}
+    .stat-cost-hint{width:100%; text-align:left; padding-left:64px;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ========================= 数据层 ========================= */
+
+const STAT_KEYS = ["power","wit","charm","luck","origin","health","wealth"];
+const STAT_LABEL = { power:"战力", wit:"悟性", charm:"魅力", luck:"气运", origin:"出身", health:"健康", wealth:"财富" };
+/* health/wealth 这两项新属性不受天赋与投胎方式影响，统一从中等水平(5)起步，
+   主要靠属性分配环节的手动加点、以及人生模拟过程中大量事件的实时影响来变化——
+   健康值会直接影响每年的意外死亡概率，财富值则会解锁/触发一些与经济状况相关的事件分支。 */
+const NEUTRAL_STAT_KEYS = ["health","wealth"];
+const NEUTRAL_STAT_BASELINE = 5;
+/* 「命运积分」「结局分层」「隐藏结局」这几套此前已经过反复测算校准的判定逻辑，
+   都只基于最初的五维属性（战力/悟性/魅力/气运/出身）——健康与财富是后加的两项新属性，
+   起始基准值为5，如果直接混入这些计算会让基准分数整体上浮，打乱之前校准好的门槛，
+   所以这里单独留一份不含健康/财富的"核心五维"列表，专门给这些计算使用。 */
+const CORE_STAT_KEYS = ["power","wit","charm","luck","origin"];
+
+const WORLDVIEWS = [
+  {id:"qixiu", name:"灵气复苏 · 修仙界", tagline:"渡劫飞升，逆天改命",
+   desc:"天地灵气复苏，凡人可修炼成仙，肉体亦可飞升，寿元长达万载。"},
+  {id:"magic", name:"阿卡纳大陆 · 剑与魔法", tagline:"魔法与剑，勇者的史诗",
+   desc:"经典的剑与魔法世界，魔王与勇者的传说代代相传，永不落幕。"},
+  {id:"scifi", name:"二一二七 · 星际科技位面", tagline:"星辰大海，机甲纵横",
+   desc:"星际殖民时代，基因改造与机甲战争主宰着人类文明的走向。"},
+  {id:"warhammer", name:"战锤纪元 · 黑暗千年", tagline:"唯有战争永恒",
+   desc:"人类帝国孤悬于亿万星海之间，战争、信仰与背叛从未停歇。"},
+  {id:"yaoguai", name:"妖怪横行 · 东方异闻录", tagline:"人妖殊途，缘起江湖",
+   desc:"阴阳杂糅的东方古国，妖魔鬼怪与修行之人共存于市井之间。"},
+  {id:"cyberpunk", name:"机械废土 · 核冬纪元", tagline:"钢铁与荒芜并存",
+   desc:"核战之后的废土世界，义体改造与赛博网络重塑了人类文明。"},
+  {id:"steampunk", name:"蒸汽纪元 · 齿轮与秩序", tagline:"以蒸汽为血，以秩序为骨",
+   desc:"维多利亚风格的蒸汽机械帝国，飞艇与齿轮装置主宰着这个讲究规矩与阶级的世界。"},
+  {id:"zombie", name:"丧尸围城 · 末日纪元", tagline:"在废墟与尸潮中挣扎求生",
+   desc:"一场突如其来的病毒灾变让文明分崩离析，幸存者们在丧尸横行的废墟都市中艰难求生。"},
+  {id:"westworld", name:"荒野西部 · 枪火纪元", tagline:"快枪与赏金的荒芜大陆",
+   desc:"一片充斥着牛仔、赏金猎人与铁路矿脉的荒芜西部大陆，规矩全靠腰间的手枪来说话。"},
+  {id:"urbanpower", name:"都市异能 · 觉醒纪元", tagline:"钢筋水泥下涌动的超凡力量",
+   desc:"看似平凡的现代都市之下，隐藏着一群悄然觉醒超凡能力的人们，游走在秩序与失控的边缘。"},
+  {id:"pirates", name:"大航海 · 风暴纪元", tagline:"扬帆于未知海域的黄金时代",
+   desc:"大航海黄金时代的浩瀚海域，海盗、商船与传说中的宝藏在惊涛骇浪间交织出无数冒险故事。"},
+  {id:"norse", name:"诸神黄昏 · 北欧神域", tagline:"凡人与诸神共存的神话时代",
+   desc:"北欧神话中巨人、诸神与凡人共同生活的世界，命运女神的丝线早已为世界织好了终结的预兆。"}
+];
+
+const REINCARNATIONS_BY_WORLD = {
+  qixiu: [
+    { id:"qixiu_baby", name:"凡胎转生 · 从零开始",
+      desc:"魂穿凡人婴儿之躯，在灵气尚且稀薄的凡俗之家降生，一切修仙之路都要从头开始。",
+      startAge:0, mod:{},
+      opening:"在一声嘹亮的啼哭中，你降生在了一户普通的凡人农家，屋外的灵气稀薄得几乎难以察觉。" },
+    { id:"qixiu_noble", name:"世家夺舍 · 嫡系子弟",
+      desc:"灵魂占据了一名修真世家嫡系子弟的躯体，含着灵石汤匙出生，却也继承了原主人留下的麻烦。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你悠悠转醒，发现自己躺在铺着灵纹锦缎的婴儿床里，房梁上悬着家族历代供奉的护法符箓。" },
+    { id:"qixiu_outcast", name:"仙门弃徒 · 绝境重生",
+      desc:"你转生成了一名被宗门放弃、判定再无修炼价值的弃徒，境遇凄凉，却也因此无人再来打扰你的秘密。",
+      startAge:0, mod:{origin:-2, luck:-1},
+      opening:"你在宗门后山的柴房里悠悠转醒，账册上记着你的名字——一个早已被判定「毫无灵根」的弃徒。" },
+    { id:"qixiu_summon", name:"雷劫夺体 · 半步筑基",
+      desc:"你的灵魂在一场天劫降临的瞬间强行夺取了一名筑基修士的躯体，一睁眼便已站在生死存亡的关口。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"漫天雷霆炸响的刹那，你睁开了眼睛——借来的这具躯体，正立于渡劫的雷云之下。" },
+    { id:"qixiu_prodigy", name:"灵根神童 · 天纵之才",
+      desc:"你生来就展现出远超同龄人的灵根禀赋，宗门上下都对你寄予厚望，压力也随之而来。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"你尚在垂髫之年，便已能感应到寻常人穷尽一生都摸不到边的灵气波动，整座村子都在传你是天生的修仙奇才。" },
+    { id:"qixiu_mistaken", name:"夺舍错位 · 阴差阳错",
+      desc:"一场本该夺舍显赫修士的仪式出了岔子，你的灵魂阴差阳错地钻进了一个毫不相关的躯体里。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"你悠悠转醒时，隐约记得那场夺舍仪式的法阵光芒，可睁开眼一看，自己分明躺在一个陌生村妇的怀里。" }
+  ],
+  magic: [
+    { id:"magic_baby", name:"婴儿转生 · 从零开始",
+      desc:"魂穿异世界初生婴儿之身，命运的长卷尚未落笔，一切皆有可能。",
+      startAge:0, mod:{},
+      opening:"在一声嘹亮的啼哭中，你以婴儿之姿降临在了这个陌生的世界。" },
+    { id:"magic_noble", name:"夺舍豪门 · 贵族之子",
+      desc:"灵魂占据了一名异世界贵族少年的躯体，含着金汤匙出生，却也继承了原主人留下的麻烦。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你悠悠转醒，发现自己躺在铺着丝绸的婴儿床里，天花板上雕着繁复精美的家族纹章。" },
+    { id:"magic_outcast", name:"精灵弃子 · 森林流浪儿",
+      desc:"你转生成了一名被精灵一族遗弃在人类边境的混血弃婴，在夹缝中长大，却也因此练就了坚韧的心性。",
+      startAge:0, mod:{origin:-2, luck:-1},
+      opening:"你在森林边缘的猎人小屋前被人发现时，还只是个裹在破旧毯子里啼哭不止的婴儿。" },
+    { id:"magic_summon", name:"女神召唤 · 成年勇者",
+      desc:"被召唤阵直接传送到异世界，一睁眼就是十六岁的勇者，还没来得及适应就要踏上冒险的旅途。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"刺目的白光散去，你发现自己站在王城的召唤法阵中央，周围跪满了神情激动的骑士。" },
+    { id:"magic_prodigy", name:"魔法神童 · 天纵之才",
+      desc:"你生来就展现出远超同龄人的魔力波动，整个王国的魔法学院都对你寄予厚望。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"接生的女巫刚把你抱起，你周身的魔力波动就让在场所有人倒吸了一口凉气，都说你是百年难遇的魔法奇才。" },
+    { id:"magic_mistaken", name:"召唤错位 · 阴差阳错",
+      desc:"一场本该召唤传说勇者的仪式出了岔子，你的灵魂阴差阳错地钻进了一个毫不相关的躯体里。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"你悠悠转醒时，隐约记得那场召唤仪式的耀眼光芒，可睁开眼一看，自己分明躺在一间普通农舍的摇篮里。" }
+  ],
+  scifi: [
+    { id:"scifi_baby", name:"人工子宫舱 · 殖民地新生儿",
+      desc:"你在殖民地的人工子宫舱中诞生，基因序列尚未定型，未来的一切都是未知数。",
+      startAge:0, mod:{},
+      opening:"育婴舱的舱盖缓缓开启，医疗机器人平稳的电子音在你出生的瞬间响起：「新生命体征正常」。" },
+    { id:"scifi_noble", name:"殖民权贵 · 总督之子",
+      desc:"你的意识接入了殖民地一名总督之子的克隆体，出生便自带殖民地最优质的基因编辑与资源配给。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你在恒温育婴舱中缓缓睁眼，舱壁外的全息投影正循环播放着你父亲——殖民地总督——的欢迎致辞。" },
+    { id:"scifi_outcast", name:"深空遇难者 · 冷冻仓孤儿",
+      desc:"你是一艘失事运输舰唯一的幸存者，从冷冻仓中被意外唤醒时，记录显示你的身份信息已经全部丢失。",
+      startAge:0, mod:{origin:-2, luck:-1},
+      opening:"冷冻仓解冻的警报声刺耳地响起，你从沉睡中挣扎着醒来，发现自己漂浮在一艘早已废弃的残骸飞船里。" },
+    { id:"scifi_summon", name:"意识空降 · 机甲驾驶员",
+      desc:"你的意识被强行下载进了一具成年机甲驾驶员的躯体，还没来得及适应，警报就已经拉响。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"意识同步完成的提示音在脑海中炸响，你睁开眼时，正坐在一台机甲的驾驶舱内，警报灯疯狂闪烁。" },
+    { id:"scifi_prodigy", name:"基因神童 · 天纵之才",
+      desc:"你的基因测评分数打破了殖民地的历史记录，各大科研机构都对你的未来寄予厚望。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"育婴舱的中央AI刚扫描完你的基因序列，警报般的高分提示音就响彻了整个医疗区。" },
+    { id:"scifi_mistaken", name:"信号错位 · 阴差阳错",
+      desc:"一场本该唤醒精英战士的复苏程序出了故障，你的意识阴差阳错地被下载进了一具毫不相关的躯体。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"你的意识在一片混乱的代码提示中醒来，本该连接的精英驾驶舱早已不知去向，只剩一具陌生的普通身躯。" }
+  ],
+  warhammer: [
+    { id:"warhammer_baby", name:"帝国公民 · 底层新生",
+      desc:"你降生在帝国某个不起眼的工业行星上，成为了亿万普通公民之中的一员，一切都要靠自己拼搏。",
+      startAge:0, mod:{},
+      opening:"教堂的钟声在你出生的那一刻敲响，神甫例行公事地在你的出生记录上盖下了帝国的徽记。" },
+    { id:"warhammer_noble", name:"贵族世家 · 军团继承人",
+      desc:"你转生成了帝国某个显赫军事世家的继承人，从出生起就注定要扛起家族世代相传的荣耀与责任。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你在庄严的家族城堡中降生，管家用只有贵族才懂的礼节，郑重地向全庄园宣布了你的名字。" },
+    { id:"warhammer_outcast", name:"惩戒军团 · 戴罪之身",
+      desc:"你的灵魂被强行塞进了一具惩戒军团囚犯的躯体，浑身背负着不知是谁欠下的滔天罪孽。",
+      startAge:16, mod:{origin:-2, luck:-1},
+      opening:"镣铐相碰的声响将你惊醒，你发现自己正被押送在一列驶向前线的囚车上，罪名栏上潦草地写着「叛国」。" },
+    { id:"warhammer_summon", name:"圣光加冕 · 帝国勇士",
+      desc:"教团的圣光仪式将你的灵魂强行灌注进一具帝国勇士的躯体，还未适应，战斗的号角就已经吹响。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"圣光加冕仪式的余晖尚未散去，你睁开眼时，发现自己已经全副武装地站在了帝国军团的检阅台上。" },
+    { id:"warhammer_prodigy", name:"信仰神童 · 天纵之才",
+      desc:"教团的信仰筛查显示你拥有远超常人的潜质，各方势力都对你的未来虎视眈眈。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"教士在为你进行常规信仰筛查时，仪器上的数值直接爆表，整间圣堂陷入了死一般的寂静。" },
+    { id:"warhammer_mistaken", name:"传送错位 · 阴差阳错",
+      desc:"一场本该强化精英战士的圣光仪式出了偏差，你的灵魂阴差阳错地降临在了一个毫不相关的躯体里。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"圣光仪式的余晖尚未散去，你却发现自己站错了地方——本该躺着的精锐战士的圣龛里，此刻只有你一个普通人。" }
+  ],
+  yaoguai: [
+    { id:"yaoguai_baby", name:"凡人转世 · 农家婴孩",
+      desc:"你转生成了一户普通农家的婴孩，尚不知自己与这个人妖共存的世界，将有怎样的缘分纠葛。",
+      startAge:0, mod:{},
+      opening:"稳婆抱着你走出产房时，院子里那株老槐树无风自动地沙沙作响，没人知道这是不是什么征兆。" },
+    { id:"yaoguai_noble", name:"富贵人家 · 员外之子",
+      desc:"你转生成了当地员外家中的独子，锦衣玉食，却也因此从小被各路想要攀附的妖魅惦记上。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你在雕梁画栋的员外府中降生，产婆道喜的话音未落，门外就来了三波道贺的乡绅。" },
+    { id:"yaoguai_outcast", name:"孤女之身 · 破庙弃婴",
+      desc:"你是被遗弃在城郊破庙里的孤儿，自幼相依为命的只有庙里那尊早已斑驳的泥菩萨。",
+      startAge:0, mod:{origin:-2, luck:-1},
+      opening:"扫庙的老僧推开庙门时，发现台阶上放着一个瑟瑟发抖的婴孩，怀里还塞着一张写不清字迹的生辰帖。" },
+    { id:"yaoguai_summon", name:"借尸还魂 · 江湖侠客",
+      desc:"你的魂魄强行附身在了一具刚刚咽气的江湖侠客身上，还没来得及弄清状况，仇家已经寻上门来。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"你猛地睁开眼，发现自己正躺在乱葬岗边缘，怀里还紧紧攥着这具躯体生前未能出鞘的佩剑。" },
+    { id:"yaoguai_prodigy", name:"灵慧神童 · 天纵之才",
+      desc:"你生来便对阴阳之气异常敏感，坊间都传你是百年难遇的修行奇才。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"你尚在垂髫之年，便已能看见常人看不见的东西，村里的老人都说你天生带着一双「阴阳眼」。" },
+    { id:"yaoguai_mistaken", name:"魂魄错位 · 阴差阳错",
+      desc:"一场本该让高人夺舍重生的法事出了岔子，你的魂魄阴差阳错地钻进了一个毫不相关的躯体里。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"你悠悠转醒时，隐约记得那场法事的香火气息，可睁开眼一看，自己分明躺在一户寻常百姓家的床榻上。" }
+  ],
+  cyberpunk: [
+    { id:"cyberpunk_baby", name:"避难所诞生 · 废土新生儿",
+      desc:"你出生在废土深处一座勉强维持运转的地下避难所里，从睁眼那一刻起，生存就是唯一的主题。",
+      startAge:0, mod:{},
+      opening:"避难所的应急灯忽明忽暗地闪烁着，你的第一声啼哭在狭窄的管道间回荡了很久。" },
+    { id:"cyberpunk_noble", name:"据点权贵 · 头目之子",
+      desc:"你转生成了废土某个据点头目的孩子，从小含着「电子奶嘴」长大，却也早早见识了废土的残酷法则。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你在据点最坚固的地堡里降生，头目——也就是你的父亲——正对着一屋子小弟宣布这个消息。" },
+    { id:"cyberpunk_outcast", name:"义体孤儿 · 黑市弃件",
+      desc:"你是黑市义体手术台上的一次「失败品」，侥幸捡回一条命，却也因此欠下了一身说不清道不明的债。",
+      startAge:0, mod:{origin:-2, luck:-1},
+      opening:"你在一堆报废义体零件中悠悠转醒，浑身的伤口还没愈合，耳边全是黑市商贩讨价还价的声音。" },
+    { id:"cyberpunk_summon", name:"意识上传 · 义体战士",
+      desc:"你的意识被强行上传进了一具改装完毕的义体战士躯壳，还没来得及适应新身体，追杀就已经开始。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"意识同步完成的提示音在脑海中炸响，你低头看向自己全新的义体双手，追兵的脚步声已经逼近。" },
+    { id:"cyberpunk_prodigy", name:"数据神童 · 天纵之才",
+      desc:"你的脑波数据在黑市检测中打出了惊人的高分，各方势力都对你的未来虎视眈眈。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"黑市的地下诊所刚给你做完常规脑波检测，仪器上爆表的数值就让在场的技师倒吸了一口凉气。" },
+    { id:"cyberpunk_mistaken", name:"信号错位 · 阴差阳错",
+      desc:"一场本该唤醒精英义体战士的激活程序出了故障，你的意识阴差阳错地被写入了一具毫不相关的躯体。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"你的意识在一片杂乱的电流声中醒来，本该连接的精英义体早已不知去向，只剩一具报废回收站里捡来的躯体。" }
+  ],
+  steampunk: [
+    { id:"steampunk_baby", name:"齿轮镇新生 · 从零开始",
+      desc:"你降生在蒸汽弥漫的齿轮镇一户普通工匠家庭里，命运的长卷尚未落笔。",
+      startAge:0, mod:{},
+      opening:"在一声嘹亮的啼哭中，你降生在了蒸汽弥漫的齿轮镇一户普通工匠家庭里。" },
+    { id:"steampunk_noble", name:"钟表世家 · 议会之子",
+      desc:"你转生成了钟表世家的继承人，含着精密齿轮长大，却也继承了家族在议会中树敌的麻烦。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你在铺着丝绒的婴儿床里悠悠转醒，天花板上悬挂着一台精美绝伦的齿轮天文钟。" },
+    { id:"steampunk_outcast", name:"锅炉孤儿 · 贫民窟弃婴",
+      desc:"你是被遗弃在贫民窟锅炉房里的弃婴，从小在蒸汽与油污中挣扎求生。",
+      startAge:0, mod:{origin:-2, luck:-1},
+      opening:"你在贫民窟锅炉房的余温里被人发现时，还只是个裹在油布里瑟瑟发抖的婴儿。" },
+    { id:"steampunk_summon", name:"机械复苏 · 觉醒工匠",
+      desc:"你的意识在一具尚未完工的机械义肢工坊里苏醒，还没来得及弄清状况，工坊的警报已经拉响。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"齿轮转动的轰鸣声将你唤醒，你睁开眼时，发现自己正躺在一具尚未完工的机械义肢工坊里，浑身管线交错。" },
+    { id:"steampunk_prodigy", name:"齿轮神童 · 天纵之才",
+      desc:"你对精密机械展现出远超同龄人的天赋，整个工程师协会都对你寄予厚望。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"你尚在垂髫之年，就已经能徒手拆装复杂的齿轮装置，整条街的钟表匠都对你刮目相看。" },
+    { id:"steampunk_mistaken", name:"传输错位 · 阴差阳错",
+      desc:"一场本该复苏顶尖工程师的机械激活仪式出了故障，你的意识阴差阳错地被灌注进了一具毫不相关的躯体。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"齿轮转动的轰鸣声渐渐平息，你却发现自己躺错了工坊——本该躺着的顶尖工程师不知去向，只剩你一个普通人。" }
+  ],
+  zombie: [
+    { id:"zombie_baby", name:"废墟新生 · 从零开始",
+      desc:"你在丧尸潮暂歇的间隙降生在废弃的地下避难所里，未来的一切都是未知数。",
+      startAge:0, mod:{},
+      opening:"在丧尸潮暂歇的间隙，你的第一声啼哭在废弃的地下避难所里回荡。" },
+    { id:"zombie_noble", name:"幸存者营地 · 首领之子",
+      desc:"你转生成了幸存者营地首领的孩子，物资优先配给，却也早早背负起了守护营地的期待。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你在营地最坚固的哨塔里降生，营地首领——你的父亲——正对着全营宣布这个消息。" },
+    { id:"zombie_outcast", name:"隔离区弃儿 · 感染边缘",
+      desc:"你是被遗弃在隔离区铁丝网内的弃儿，从出生起就被贴上了「疑似感染」的标签。",
+      startAge:0, mod:{origin:-2, luck:-1},
+      opening:"你在隔离区的铁丝网内被人发现时，怀里还紧紧攥着一张写着「疑似感染」的诊断单。" },
+    { id:"zombie_summon", name:"紧急苏醒 · 幸存战士",
+      desc:"你在一群丧尸的围攻声中骤然清醒，还没弄清状况，就已经要为自己的性命而战。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"警报声将你从昏迷中惊醒，你睁开眼时，一群丧尸正拍打着你所在房间的铁门。" },
+    { id:"zombie_prodigy", name:"求生神童 · 天纵之才",
+      desc:"你从小就展现出远超同龄人的求生直觉，营地的老兵都说你是难得一见的生存奇才。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"你尚在垂髫之年，就已经能准确判断出丧尸出现的方位，营地里的老兵都对你刮目相看。" },
+    { id:"zombie_mistaken", name:"疫苗错位 · 阴差阳错",
+      desc:"一场本该救治重伤精英战士的紧急抢救出了差错，你阴差阳错地占用了本不属于你的病床与资源。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"你在一片混乱的抢救声中悠悠转醒，本该躺在这张病床上的重伤战士早已不知所踪，只剩你一个普通幸存者。" }
+  ],
+  westworld: [
+    { id:"westworld_baby", name:"尘土新生 · 从零开始",
+      desc:"你在滚滚黄沙与远处的枪声中降生在这片荒芜大陆上，一切都要靠自己拼出来。",
+      startAge:0, mod:{},
+      opening:"在滚滚黄沙与远处的枪声中，你的第一声啼哭在这片荒芜大陆上响起。" },
+    { id:"westworld_noble", name:"牧场主之子 · 铁路世家",
+      desc:"你转生成了牧场主与铁路世家的继承人，从小锦衣玉食，却也早早卷入了地皮与铁路的纷争。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你在庄园式的牧场大宅里降生，管家郑重地向所有雇工宣布了少爷诞生的消息。" },
+    { id:"westworld_outcast", name:"孤儿列车 · 无名弃婴",
+      desc:"你是被遗弃在开往边境的运货列车车厢里的婴儿，身世成谜，只能靠自己闯出一片天地。",
+      startAge:0, mod:{origin:-2, luck:-1},
+      opening:"你是被遗弃在开往边境的运货列车车厢里的婴儿，怀里只塞着一张模糊不清的身世纸条。" },
+    { id:"westworld_summon", name:"决斗苏醒 · 悬赏猎人",
+      desc:"你在一场剑拔弩张的对峙中骤然清醒，还没弄清自己是谁，对方的枪口已经指向了你。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"你猛地睁开眼，发现自己正站在小镇广场中央，对面的枪手已经把手悬在了枪柄上。" },
+    { id:"westworld_prodigy", name:"枪法神童 · 天纵之才",
+      desc:"你从小就展现出远超同龄人的枪法天赋，镇上的老猎人都说你是百年难遇的奇才。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"你尚在垂髫之年，就已经能用弹弓精准命中百步外的靶子，镇上的老猎人都对你刮目相看。" },
+    { id:"westworld_mistaken", name:"身份错位 · 阴差阳错",
+      desc:"一场本该营救悬赏猎人的越狱行动出了差错，你阴差阳错地被当成了那名猎人押上了运货列车。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"你在颠簸的车厢里悠悠转醒，本该被营救的悬赏猎人早已不知去向，押送的人却把你错认成了他。" }
+  ],
+  urbanpower: [
+    { id:"urbanpower_baby", name:"普通婴孩 · 从零开始",
+      desc:"你在一间普通的市立医院产房里降生，和无数普通婴儿并无二致，未来却充满未知。",
+      startAge:0, mod:{},
+      opening:"在一间普通的市立医院产房里，你的第一声啼哭和无数普通婴儿并无二致。" },
+    { id:"urbanpower_noble", name:"财阀之子 · 家族继承人",
+      desc:"你转生成了城中财阀家族的继承人，从出生起就注定要接手庞大的家业与随之而来的纷争。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你在城中最高档的私立产房里降生，家族的律师团已经在产房外草拟好了继承文件。" },
+    { id:"urbanpower_outcast", name:"孤儿院弃儿 · 身世成谜",
+      desc:"你是被匿名放在孤儿院门口的弃儿，身世成谜，只能靠自己一步步在这座城市里立足。",
+      startAge:0, mod:{origin:-2, luck:-1},
+      opening:"你是被匿名放在孤儿院门口的婴儿，篮子里只有一张写着出生日期的纸条。" },
+    { id:"urbanpower_summon", name:"能力觉醒 · 高中生",
+      desc:"你的超凡能力在某个寻常的瞬间骤然觉醒，还没弄清状况，命运的齿轮已经开始转动。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"教室里的灯光忽然剧烈闪烁，你从课桌上猛地惊醒，发现自己的掌心正萦绕着一层无法解释的微光。" },
+    { id:"urbanpower_prodigy", name:"觉醒神童 · 天纵之才",
+      desc:"你的异能测评数据打破了组织的历史记录，各方势力都对你的未来虎视眈眈。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"体检仪器刚扫描完你的数值，爆表的读数就让在场的医生倒吸了一口凉气，都说你是百年难遇的异能奇才。" },
+    { id:"urbanpower_mistaken", name:"觉醒错位 · 阴差阳错",
+      desc:"一场本该唤醒某位精英异能者的实验出了差错，你的身体阴差阳错地成了替补的实验对象。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"实验室的警报声渐渐平息，你却发现自己躺错了实验台——本该在此的精英异能者早已不知去向，只剩你一个普通人。" }
+  ],
+  pirates: [
+    { id:"pirates_baby", name:"港口新生 · 从零开始",
+      desc:"你在海鸥的鸣叫与港口的喧闹声中降生在这座热闹的港城，未来的航线尚未绘就。",
+      startAge:0, mod:{},
+      opening:"在海鸥的鸣叫与港口的喧闹声中，你的第一声啼哭在这座热闹的港城响起。" },
+    { id:"pirates_noble", name:"船队世家 · 船主之子",
+      desc:"你转生成了船队世家的继承人，从小在甲板上长大，却也早早卷入了各家船队的明争暗斗。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你在船队旗舰的船长室里降生，整支船队都为这个新生命鸣响了礼炮。" },
+    { id:"pirates_outcast", name:"弃儿水手 · 漂流孤儿",
+      desc:"你是被人发现漂浮在破木桶里的弃婴，身世成谜，往后的日子只能靠自己在海上闯荡。",
+      startAge:0, mod:{origin:-2, luck:-1},
+      opening:"你是被人发现漂浮在一只破木桶里的婴儿，桶身上刻着一个已经模糊不清的姓氏。" },
+    { id:"pirates_summon", name:"沉船苏醒 · 落难水手",
+      desc:"你在一片破碎的甲板残骸上呛咳着醒来，还没弄清自己的处境，就已经要在茫茫大海上求生。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"你在一片破碎的甲板残骸上呛咳着醒来，四周只剩下无边无际的大海和盘旋的海鸟。" },
+    { id:"pirates_prodigy", name:"航海神童 · 天纵之才",
+      desc:"你从小就展现出远超同龄人的航海直觉，港口的老水手都说你是百年难遇的奇才。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"你尚在垂髫之年，就已经能凭着风向准确判断天气，港口的老水手都对你刮目相看。" },
+    { id:"pirates_mistaken", name:"身份错位 · 阴差阳错",
+      desc:"一场本该营救落难船长的营救行动出了差错，你阴差阳错地被当成了那位船长救上了船。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"你在摇晃的甲板上悠悠转醒，本该被营救的落难船长早已不知去向，营救你的水手却把你错认成了他。" }
+  ],
+  norse: [
+    { id:"norse_baby", name:"村落新生 · 从零开始",
+      desc:"你在极光笼罩的长夜里降生在这座北境村落，命运的丝线尚未织就。",
+      startAge:0, mod:{},
+      opening:"在极光笼罩的长夜里，你的第一声啼哭在这座北境村落中回荡。" },
+    { id:"norse_noble", name:"王座血脉 · 族长之子",
+      desc:"你转生成了族长的孩子，从出生起就背负着守护部落与继承王座的双重期待。",
+      startAge:0, mod:{origin:2, power:-1},
+      opening:"你在装饰着巨大鹿角的正厅中降生，族中的贤者郑重地为你举行了命名仪式。" },
+    { id:"norse_outcast", name:"弃婴岩洞 · 流放血脉",
+      desc:"你是被遗弃在山间岩洞里的弃婴，身世成谜，只有一块刻着模糊符文的兽骨陪伴着你。",
+      startAge:0, mod:{origin:-2, luck:-1},
+      opening:"你是被遗弃在山间岩洞里的婴儿，身边只有一块刻着模糊符文的兽骨。" },
+    { id:"norse_summon", name:"英灵苏醒 · 女武神战士",
+      desc:"你在战场的尸骸之间猛然睁眼，一位女武神正俯身审视着你，判断你是否值得被带走。",
+      startAge:16, mod:{power:2, luck:-1},
+      opening:"你在战场的尸骸之间猛然睁眼，一位身披铠甲的女武神正俯身审视着你，似乎在判断你是否值得被带走。" },
+    { id:"norse_prodigy", name:"先知神童 · 天纵之才",
+      desc:"你从小就展现出远超同龄人的预言天赋，部落的贤者都说你是百年难遇的奇才。",
+      startAge:0, mod:{wit:2, luck:-1},
+      opening:"你尚在垂髫之年，就已经能说出还未发生的事情，部落的贤者都对你刮目相看，也隐隐生出了几分忌惮。" },
+    { id:"norse_mistaken", name:"接引错位 · 阴差阳错",
+      desc:"一场本该接引战死英雄的女武神仪式出了差错，你的灵魂阴差阳错地被带到了这片陌生的土地上。",
+      startAge:0, mod:{luck:2, origin:-1},
+      opening:"女武神的光辉尚未散去，你却发现自己站错了地方——本该被接引的战死英雄早已不知去向，只剩你一个普通人。" }
+  ]
+};
+
+// rarity: legendary / epic / rare / common / flaw
+const TALENTS = [
+  {id:"dragon", name:"龙裔血脉", rarity:"legendary", tags:["dragon"], mod:{power:3},
+   desc:"体内潜藏着远古巨龙的血脉，力量会随着愤怒与危机逐渐觉醒。"},
+  {id:"system", name:"命运系统", rarity:"legendary", tags:["system"], mod:{},
+   desc:"脑海中浮现出一块神秘面板，往后的人生仿佛游戏一般有迹可循。"},
+  {id:"king", name:"王之权柄", rarity:"legendary", tags:["king"], mod:{power:2, origin:2},
+   desc:"与生俱来的支配者气度，天生就该站在世界的顶点。"},
+  {id:"memory", name:"转生者的记忆", rarity:"epic", tags:["memory"], mod:{wit:2},
+   desc:"隐约保留着前世的知识与经验，做事总能未卜先知一步。"},
+  {id:"elf", name:"精灵血统", rarity:"epic", tags:["elf"], mod:{wit:2, charm:1},
+   desc:"血管里流淌着精灵一族的血液，与自然亲近，魔力异常充沛。"},
+  {id:"hiddenboss", name:"隐藏Boss体质", rarity:"epic", tags:["hiddenboss"], mod:{},
+   desc:"看似弱小可欺，实则深藏不露，关键时刻总有惊天反转。"},
+  {id:"chosen", name:"天选之人", rarity:"epic", tags:["chosen"], mod:{luck:2},
+   desc:"似乎被这个世界的意志所眷顾，重大的剧情总会主动找上门来。"},
+  {id:"noble_born", name:"转生贵族", rarity:"rare", tags:[], mod:{origin:3},
+   desc:"出身高贵的异世界名门之后，从小锦衣玉食，仆从成群。"},
+  {id:"familiar", name:"契约灵兽", rarity:"rare", tags:["familiar"], mod:{power:1},
+   desc:"与一只神秘的灵兽签订了契约，患难之时总有它相伴左右。"},
+  {id:"luckygod", name:"幸运女神眷顾", rarity:"rare", tags:[], mod:{luck:3},
+   desc:"无论走到哪里都像是被幸运女神牵着手前行。"},
+  {id:"harem", name:"万人迷体质", rarity:"rare", tags:["harem"], mod:{charm:3},
+   desc:"无论种族与身份，总有人对你一见倾心。"},
+  {id:"lingual", name:"过耳成诵", rarity:"rare", tags:[], mod:{wit:1, charm:1},
+   desc:"转生的瞬间便通晓了这个世界的所有语言与文字。"},
+  {id:"swordsoul", name:"剑术宗师之魂", rarity:"rare", tags:["swordsman"], mod:{power:2},
+   desc:"灵魂深处仿佛刻着一整套完整而古老的剑术体系。"},
+  {id:"tsukkomi", name:"毒舌吐槽役", rarity:"common", tags:["tsukkomi"], mod:{charm:1},
+   desc:"擅长犀利吐槽，虽然嘴上不饶人，人缘却意外的不错。"},
+  {id:"muscle", name:"肌肉笨蛋", rarity:"common", tags:[], mod:{power:2, wit:-1},
+   desc:"力大无穷，脑子却不怎么好使，凡事喜欢用拳头解决。"},
+  {id:"selfmade", name:"白手起家", rarity:"common", tags:[], mod:{origin:-1, luck:1},
+   desc:"没有任何背景可以依靠，只能凭自己一步步向上攀爬。"},
+  {id:"salted", name:"咸鱼求生", rarity:"common", tags:["salted"], mod:{power:-1, luck:1},
+   desc:"毫无野心，只想安安稳稳地苟活到寿终正寝。"},
+  {id:"pretty", name:"颜值担当", rarity:"common", tags:[], mod:{charm:2},
+   desc:"长相出众，无论走到哪里都是人群中的焦点。"},
+  {id:"memorize", name:"过目不忘", rarity:"common", tags:[], mod:{wit:1},
+   desc:"读过的书、见过的招式，几乎都能过目不忘。"},
+  {id:"passerby", name:"路人甲脸", rarity:"flaw", tags:["passerby"], mod:{charm:-2},
+   desc:"长相普通到连NPC都要多看两眼才能勉强认出你。"},
+  {id:"shortlived", name:"短命脸", rarity:"flaw", tags:["shortlived"], mod:{luck:-1},
+   desc:"总给人一种活不过三集就要退场的不祥预感。"},
+  {id:"deathflag", name:"死亡Flag体质", rarity:"flaw", tags:["deathflag"], mod:{},
+   desc:"每次立下『这次任务结束就退休』的flag，命运总要开个不大不小的玩笑。"},
+  {id:"villain", name:"反派体质", rarity:"flaw", tags:["villain"], mod:{luck:-2},
+   desc:"总是不知不觉就站到了主角的对立面，明明没做什么坏事。"},
+  {id:"trash", name:"废柴认证", rarity:"flaw", tags:[], mod:{wit:-2},
+   desc:"苦练三年，连最基础的魔法都一个学不会。"},
+  {id:"blackening", name:"黑化Flag体质", rarity:"flaw", tags:["blackening"], mod:{},
+   desc:"身边的伙伴总是莫名其妙地一个接一个走上黑化之路。"},
+  {id:"unlucky", name:"天生倒霉体质", rarity:"flaw", tags:[], mod:{luck:-3},
+   desc:"喝口凉水都能被自己噎到，气运常年维持在负数。"},
+  {id:"xiangen", name:"上古仙灵根", rarity:"legendary", tags:["xiangen"], mod:{wit:3}, world:"qixiu",
+   desc:"体内孕育着万中无一的上古灵根，修炼速度远超同辈修士。"},
+  {id:"royalmagic", name:"魔法皇室血脉", rarity:"epic", tags:["royalmagic"], mod:{wit:2, origin:2}, world:"magic",
+   desc:"血脉中流淌着王室代代相传的魔法天赋，天生就是法师的坯子。"},
+  {id:"genemod", name:"量子基因优化", rarity:"epic", tags:["genemod"], mod:{wit:2, power:1}, world:"scifi",
+   desc:"出生前便接受了殖民地最高规格的基因编辑，身体机能远超常人。"},
+  {id:"emperorwhisper", name:"帝皇血脉低语", rarity:"legendary", tags:["emperorwhisper"], mod:{power:3, luck:-1}, world:"warhammer",
+   desc:"耳边总回响着帝皇模糊的低语，你的躯体天生就是为战争而生。"},
+  {id:"foxblood", name:"妖狐血脉", rarity:"epic", tags:["foxblood"], mod:{charm:2, luck:1}, world:"yaoguai",
+   desc:"体内流淌着一缕狐族血脉，天生媚骨天成，惑人心神于无形。"},
+  {id:"cyberlimb", name:"义体改造血统", rarity:"rare", tags:["cyberlimb"], mod:{power:2}, world:"cyberpunk",
+   desc:"从小接受废土黑市的义体改造，半身钢铁，半身血肉。"},
+  {id:"gearheart", name:"机械心脏", rarity:"legendary", tags:["gearheart"], mod:{wit:2, power:1}, world:"steampunk",
+   desc:"你的胸腔中嵌着一枚精密的机械心脏核心，赋予你超越常人的耐久与专注力。"},
+  {id:"immunblood", name:"免疫之血", rarity:"legendary", tags:["immunblood"], mod:{power:2, luck:1}, world:"zombie",
+   desc:"你的血液中天生携带着对丧尸病毒的免疫因子，这在末日里是比黄金更珍贵的财富。"},
+  {id:"gunslinger", name:"神枪之名", rarity:"epic", tags:["gunslinger"], mod:{power:2, charm:1}, world:"westworld",
+   desc:"你生来手感极佳，据说只要拔枪，就没有打不中的靶子。"},
+  {id:"awakening", name:"本源觉醒", rarity:"legendary", tags:["awakening"], mod:{wit:2, luck:1}, world:"urbanpower",
+   desc:"你体内沉睡的超凡本源在某个瞬间彻底苏醒，让你天生就站在了普通人无法企及的起跑线上。"},
+  {id:"conqueror", name:"霸王之色", rarity:"legendary", tags:["conqueror"], mod:{power:2, charm:2}, world:"pirates",
+   desc:"你天生带着令人俯首的霸道气场，据说这是万里挑一才会觉醒的稀有霸气。"},
+  {id:"jotunblood", name:"巨人之力", rarity:"epic", tags:["jotunblood"], mod:{power:3}, world:"norse",
+   desc:"你的血脉中混杂着古老巨人一族的力量，天生神力超乎常人。"},
+
+  {id:"prophet", name:"神谕先知", rarity:"legendary", tags:["prophecy"], mod:{wit:2, luck:2},
+   desc:"你能隐约窥见命运的只言片语，关键抉择前总会得到一丝朦胧的预兆。"},
+  {id:"undying", name:"不死之身", rarity:"legendary", tags:["immortal"], mod:{power:3},
+   desc:"你的身体拥有异于常人的自愈能力，寻常的伤病几乎无法真正伤到你。"},
+
+  {id:"twinsoul", name:"双生灵魂", rarity:"epic", tags:["twin"], mod:{charm:1, luck:1},
+   desc:"你的灵魂在转生时意外分裂出了一缕残留意识，冥冥中总有第二个「自己」在关键时刻提醒你。"},
+  {id:"prodigy", name:"过目成诵的天才", rarity:"epic", tags:["genius"], mod:{wit:3},
+   desc:"你拥有近乎作弊的学习能力，任何知识只需一次接触便能牢牢记住。"},
+  {id:"beasttamer", name:"驯兽之心", rarity:"epic", tags:["beast_tamer"], mod:{charm:1, power:1},
+   desc:"你天生能与各种野兽心意相通，再凶猛的生物在你面前都会变得温顺。"},
+
+  {id:"richluck", name:"暴富体质", rarity:"rare", tags:["richluck"], mod:{luck:2},
+   desc:"你总能在意想不到的地方捡到值钱的东西，钱包从来没有真正瘪过。"},
+  {id:"ironbones", name:"钢筋铁骨", rarity:"rare", tags:[], mod:{power:2},
+   desc:"骨骼与肌肉都异于常人的强韧，寻常拳脚很难真正伤到你。"},
+  {id:"quickwit", name:"急智", rarity:"rare", tags:[], mod:{wit:1, luck:1},
+   desc:"遇事总能急中生智，关键时刻总能想出别人想不到的办法。"},
+  {id:"propheticdream", name:"先知之梦", rarity:"rare", tags:["prophecy"], mod:{luck:1},
+   desc:"你时常在梦中看到还未发生的片段，虽然模糊，却也让你比旁人更能未雨绸缪。"},
+  {id:"silverspoon", name:"天生贵气", rarity:"rare", tags:[], mod:{origin:2},
+   desc:"你浑身上下都透着一股说不清道不明的贵气，走到哪里都容易被高看一眼。"},
+
+  {id:"nightowl", name:"夜猫子", rarity:"common", tags:[], mod:{wit:1, power:-1},
+   desc:"你天生就是夜猫子体质，晚上格外精神，白天却总是无精打采。"},
+  {id:"earlybird", name:"早起的鸟儿", rarity:"common", tags:[], mod:{power:1, charm:-1},
+   desc:"你总是全村第一个起床的人，却也因此显得格格不入，没什么娱乐爱好。"},
+  {id:"chatty", name:"话痨", rarity:"common", tags:["tsukkomi"], mod:{charm:1},
+   desc:"你天生话多，虽然有时候惹人嫌，但也因此交到了不少朋友。"},
+  {id:"luckydraw", name:"手气不错", rarity:"common", tags:[], mod:{luck:1},
+   desc:"逢年过节抽奖之类的小活动，你总能拿到还不错的奖品。"},
+  {id:"musclememory", name:"肌肉记忆", rarity:"common", tags:[], mod:{power:1},
+   desc:"你学什么技能都特别快，身体的协调性远超常人。"},
+
+  {id:"directionless", name:"路痴", rarity:"flaw", tags:[], mod:{luck:-1},
+   desc:"你的方向感差到令人发指，就算是走熟的路也能迷路。"},
+  {id:"allergic", name:"过敏体质", rarity:"flaw", tags:[], mod:{power:-1},
+   desc:"你对各种稀奇古怪的东西过敏，一不小心就会浑身起疹子。"},
+  {id:"faceblind", name:"脸盲症", rarity:"flaw", tags:[], mod:{charm:-1},
+   desc:"你几乎记不住任何人的长相，哪怕是多年的熟人也常常认错。"},
+  {id:"indecisive", name:"选择困难症", rarity:"flaw", tags:[], mod:{wit:-1},
+   desc:"你做什么决定都要纠结老半天，经常因此错失良机。"},
+  {id:"grudgeholder", name:"记仇体质", rarity:"flaw", tags:["cursed"], mod:{luck:-2},
+   desc:"你天生记仇，一点小事都能让你耿耿于怀，无形中得罪了不少人。"}
+];
+const RARITY_LABEL = {legendary:"传说", epic:"史诗", rare:"稀有", common:"普通", flaw:"缺陷"};
+const RARITY_WEIGHT = {legendary:2, epic:6, rare:16, common:38, flaw:38};
+
+/* 事件池：age:[min,max]  cond(ctx)=>bool   effect(ctx)=>void   weight   once   achievement  death */
+function hasTag(ctx, tag){ return ctx.tags.has(tag); }
+function hasFlag(ctx, flag){ return ctx.flags.has(flag); }
+function stat(ctx, key){ return ctx.stats[key]; }
+/* 事件的 text 字段可以是普通字符串（通用文案），也可以是按世界观区分的对象
+   （如 {qixiu:"...", magic:"...", ...}），resolveText 负责按当前世界观取出对应文案 */
+function resolveText(ev, ctx){
+  if(typeof ev.text === "string") return ev.text;
+  return ev.text[ctx.world] || ev.text.magic || Object.values(ev.text)[0];
+}
+
+/* 意外事件池：与年龄阶段、世界观都无关的纯粹运气事件，只在少年期及以后出现
+   （幼年阶段赌钱、被偷之类的桥段不太合适）。每条都会真实影响一项属性数值，
+   分为「意外之喜」和「意外之灾」两类，权重刻意压低，只作为偶尔冒出来的惊喜或惊吓。 */
+const RANDOM_EVENTS = {
+  fortune:[
+    {text:"你在路边意外捡到一个鼓鼓囊囊的钱袋，四下张望后确认无人认领，只好收下这笔飞来横财。", weight:4, statEffect:{luck:1}},
+    {text:"你无意间帮了一位路过的老者一个小忙，对方转身竟从怀里摸出一本泛黄的书册相赠，你如获至宝。", weight:4, statEffect:{wit:1}},
+    {text:"你参加了一场地方庙会的抽奖活动，运气爆棚地抽中了头等奖，惹得周围人一阵艳羡。", weight:4, statEffect:{luck:1}},
+    {text:"你在整理旧物时翻出一件祖辈留下的信物，据懂行的人说，这东西还挺值钱。", weight:4, statEffect:{origin:1}},
+    {text:"你偶然结识了一位深藏不露的高人，对方看你顺眼，随手指点了你几句，让你茅塞顿开。", weight:4, statEffect:{wit:1}},
+    {text:"你在一次意外中爆发出了远超平时的力气，把围观的人都惊呆了，自己也吓了一跳。", weight:4, statEffect:{power:1}},
+    {text:"你在集市上偶然一见如故，对方竟也对你颇有好感，两人相谈甚欢，从此多了个知己。", weight:4, statEffect:{charm:1}},
+    {text:"你随手帮一位路人解决了小麻烦，对方感激涕零，四处替你扬名，你的名声悄悄好了不少。", weight:4, statEffect:{charm:1}},
+    {text:"你在荒僻之地意外发现了一处清冽的泉眼，喝下后浑身舒畅，仿佛打通了某些说不清道不明的关窍。", weight:4, statEffect:{power:1}},
+    {text:"你路遇一场纠纷，仗义执言帮弱势一方讨回了公道，对方感激不尽，与你结为至交。", weight:4, statEffect:{charm:1}},
+    {text:"你在一次无心的尝试中，发现自己对某样从没接触过的技艺有着异于常人的天赋。", weight:4, statEffect:{wit:1}},
+    {text:"你莫名其妙地被卷入一场误会，却因此意外结识了一位对你此后影响深远的贵人。", weight:4, statEffect:{luck:1}}
+  ],
+  misfortune:[
+    {text:"你走在路上被不知从哪儿飞来的东西砸中，虽无大碍，却也疼了好几天，气不打一处来。", weight:4, statEffect:{power:-1}},
+    {text:"你辛苦攒下的一点积蓄被小偷不声不响地摸走了，气得你好几天没睡好觉。", weight:4, statEffect:{luck:-1}},
+    {text:"你被一场无妄之灾卷入了旁人的纠纷，白白遭了一顿数落，有苦说不出。", weight:4, statEffect:{charm:-1}},
+    {text:"你贸然尝试了一件从没做过的事，结果闹了个不大不小的笑话，让你好一阵子都抬不起头。", weight:4, statEffect:{charm:-1}},
+    {text:"你因为一次草率的判断吃了大亏，事后越想越懊恼，却也只能吃一堑长一智。", weight:4, statEffect:{wit:-1}},
+    {text:"你在毫无征兆的情况下病了一场，虽然最后痊愈了，身子骨却大不如前。", weight:4, statEffect:{power:-1}},
+    {text:"你被一场突如其来的谣言中伤，名声受损，好长一段时间都被人指指点点。", weight:4, statEffect:{charm:-1}},
+    {text:"你一时冲动与人打了个赌，结果输掉了一大笔家当，追悔莫及。", weight:4, statEffect:{origin:-1}},
+    {text:"你莫名其妙地成了旁人矛盾的出气筒，平白无故挨了一顿责骂，满肚子委屈没处说。", weight:4, statEffect:{luck:-1}},
+    {text:"你一次冲动之下做出的决定，事后被证明是个彻头彻尾的馊主意，让你懊恼了许久。", weight:4, statEffect:{wit:-1}},
+    {text:"家里的产业因为一场意外的变故缩水了不少，日子一下子紧巴了起来。", weight:4, statEffect:{origin:-1}},
+    {text:"你被卷进一场不大不小的意外，虽然有惊无险，却也把你吓得不轻，往后行事都谨慎了几分。", weight:4, statEffect:{luck:-1}}
+  ]
+};
+
+const EVENTS = {
+  infant: [ // 0-9
+    {text:"在异世界的摇篮里，你第一次哭闹时不小心震碎了窗户上的玻璃，把奶妈吓得魂飞魄散。", weight:10},
+    {text:"你发现自己竟能看懂墙上挂着的异世界古老文字，这具身体的原主人似乎博览群书。", weight:8},
+    {text:"村口的占卜师看了你一眼，脸色骤变，只留下一句「这孩子命格不凡」便匆匆离去。", weight:6},
+    {text:"邻居家凶猛的魔兽幼崽见到你后，莫名其妙地摇起了尾巴，仿佛已经认定你是它的主人。", weight:6},
+    {text:"你在睡梦中无意识地喷出一口火焰，把摇篮烧了个精光，全家人却都松了口气。", weight:8, cond:c=>hasTag(c,"dragon")},
+    {text:"你眼前突然弹出一块半透明的面板，上面写着「检测到宿主降临，绑定成功」。", weight:10, cond:c=>hasTag(c,"system")},
+    {text:"村里的孩子都不太愿意跟你玩，因为你总是不小心把过家家用的木剑变成了真剑。", weight:5},
+    {text:"一位路过的神秘老者摸了摸你的头，说了句「孺子可教」，转身便消失得无影无踪。", weight:5},
+    {text:"你尝试喊出人生第一句话，说的却是一口流利的异世界古语，把全家人都惊呆了。", weight:5},
+    {text:"作为家境优渥的孩子，你三岁就被安排了整整五位启蒙先生，日程排得比谁都紧凑，喘息的功夫都没有。", weight:7, cond:c=>stat(c,"origin")>=7},
+    {text:"家里穷得揭不开锅，你五岁就跟着大人下地干活，练就了一身与年龄不符的力气。", weight:7, cond:c=>stat(c,"origin")<=3},
+    {text:"一场突如其来的魔兽袭击了村庄，襁褓中的你却安然无恙，仿佛冥冥中自有天意庇护。", weight:5},
+    {text:"你抱着契约灵兽的幼崽睡了整整一夜，第二天两人已经心有灵犀。", weight:6, cond:c=>hasTag(c,"familiar")},
+    {text:"你总是在恰好的时间哭闹，恰好躲过了几次原本会发生的意外，村民都说你自带主角光环。", weight:5, cond:c=>hasTag(c,"chosen")},
+    {text:"你出生后第一次啼哭，竟引来窗外一群麻雀齐齐落在屋檐上安静地注视着你，村民都觉得诡异又新奇。", weight:6},
+    {text:"你在满月宴上突然咯咯笑出了声，接生婆手一抖，差点打翻了满盆的洗儿汤。", weight:6},
+    {text:"你四岁那年在河边捡到一枚造型古怪的石头，此后便一直随身携带，仿佛冥冥中有什么在牵引着你。", weight:6},
+    {text:"村里的姑娘们总喜欢抢着抱你，都说你从小就长得讨喜，谁见了都要多逗弄两下。", weight:5, cond:c=>stat(c,"charm")>=7},
+    {text:"你自小体弱多病，家里没少为你的汤药钱发愁，却也因此被养得格外仔细。", weight:5, cond:c=>stat(c,"power")<=3&&stat(c,"origin")<=3},
+    {text:"邻居家几个年纪相仿的孩子总喜欢围着你转，理由五花八门，却殊途同归。", weight:5, cond:c=>hasTag(c,"harem")},
+    {text:"你不过是抢了块糖，就被全村孩子联合起来编排成了「恶霸」，你觉得十分冤枉。", weight:5, cond:c=>hasTag(c,"villain")},
+    {text:"你六岁时第一次尝试翻墙掏鸟窝，结果直接从墙头栽了下去，却奇迹般地毫发无伤。", weight:6},
+    {text:"你参加村里举办的选美评比，评委端详了半天，愣是没能一眼认出你是哪家的孩子。", weight:5, cond:c=>hasTag(c,"passerby")},
+    {text:"你捡到的每一枚硬币背面似乎都刻着同一个吉利的符号，虽然没人知道那到底是什么意思。", weight:5, cond:c=>stat(c,"luck")>=7},
+    {text:"路过的野兽总会在你面前莫名其妙地放下戒心，甚至乖乖趴下任由你摸头。", weight:6, cond:c=>hasTag(c,"beast_tamer")},
+    {death:true, text:"一场瘟疫悄然席卷了村庄，年幼体弱的你没能挺过那个寒冷的冬天。", weight:1, cause:"幼年夭折"},
+    {death:true, text:"你自幼体弱多病，一场本不该致命的风寒，却还是没能让你挺过去。", weight:1, cond:c=>stat(c,"health")<=3, cause:"幼年病夭"}
+  ],
+  youth: [ // 10-15
+    {text:"你与班上一个处处针锋相对的同学结下了梁子，两人谁都不服谁，明里暗里较量了好几回合。", weight:5, setFlag:"rival_met"},
+    {text:"你无意间发现了一件与自己身世有关的信物，直觉告诉你，这背后藏着不为人知的秘密。", weight:5, setFlag:"secret_lineage"},
+    {text:"一场突如其来的灾难降临，你侥幸捡回了一条命，却也因此留下了挥之不去的阴影。", weight:5, setFlag:"disaster_survivor", statEffect:{health:-1,luck:1}},
+    {text:"你意外欠下了一位神秘人一个人情，对方只留下一句「日后再还」便悄然消失，让你心里一直悬着。", weight:5, setFlag:"owes_favor"},
+    {choice:true, weight:6, text:"你无意间目睹了一个不该看到的秘密，要不要声张，全看你自己怎么想。", options:[
+      {label:"大声揭发出来", result:"你选择大声揭发，虽然因此得罪了不少人，却也因为这份正直赢得了另一些人的尊重。", statEffect:{charm:1,luck:-1}},
+      {label:"装作什么都没看到", result:"你选择了什么都不说，权当自己什么都没看到，日子照常过着。", statEffect:{}},
+      {label:"私下警告当事人，给个改过的机会", result:"你私下找到当事人，给了对方一个改过自新的机会，对方对你感激不尽。", statEffect:{wit:1,charm:1}}
+    ]},
+    {text:"一位不知名的先生看出了你的潜力，主动提出要收你为徒，往后的日子里对你倾囊相授。", weight:5, setFlag:"mentor_found", statEffect:{wit:1}},
+    {choice:true, weight:6, text:"你面前忽然出现了两条截然不同的道路，一时间竟不知该如何抉择。", options:[
+      {label:"苦练体魄，走一条靠拳脚吃饭的路", result:"你选择了偏重力量的道路，从此在摸爬滚打中一点点磨出了本事。", statEffect:{power:1}},
+      {label:"埋头苦读，走一条靠脑子吃饭的路", result:"你选择了偏重智慧的道路，一头扎进了知识的海洋，渐渐尝到了甜头。", statEffect:{wit:1}},
+      {label:"两条路都不选，走一条谁也没走过的路", result:"你谁都没选，执意要走一条谁也没走过的路，旁人都说你倔，你却乐在其中。", statEffect:{luck:1}}
+    ]},
+    {text:{
+      qixiu:"附近宗门派出长老下山选拔弟子，你凭借出色的悟性拿到了梦寐以求的入门资格。",
+      magic:"王都的魔法学院派人下乡选拔新生，你凭借出色的表现拿到了梦寐以求的入学资格。",
+      scifi:"殖民地精英学院派人下到边陲选拔新生，你凭借出色的模拟测试成绩拿到了梦寐以求的入学资格。",
+      warhammer:"帝国的征募官提前来到边境村庄选拔苗子，你凭借过人的体魄拿到了梦寐以求的候补生资格。",
+      yaoguai:"城中小有名气的道观下山选拔弟子，你凭借与生俱来的敏锐直觉拿到了梦寐以求的入门资格。",
+      cyberpunk:"废土上颇具名气的技术学徒营下乡招募新人，你凭借出色的表现拿到了梦寐以求的入营资格。"
+    }, weight:10},
+    {text:"你在集市上支起小摊，卖起了只有你才知道配方的「泡面」，意外成了抢手货。", weight:8},
+    {text:{
+      qixiu:"你在宗门的拜师测试中一鸣惊人，被长老称为「百年难遇的道胎」。",
+      magic:"你在学院的入学测试中一鸣惊人，被教授称为「百年一遇的天才」。",
+      scifi:"你在殖民地的模拟测试中一鸣惊人，被教官称为「百年一遇的天才」。",
+      warhammer:"你在新兵的甄别测试中一鸣惊人，被裁决官称为「百年难遇的好苗子」。",
+      yaoguai:"你在道观的入门考验中一鸣惊人，被老道长称为「百年难遇的根骨」。",
+      cyberpunk:"你在技术营的入营测试中一鸣惊人，被老技师称为「百年一遇的天才」。"
+    }, weight:8, cond:c=>stat(c,"wit")>=7},
+    {text:{
+      qixiu:"你在宗门的课堂上总是走神，吐纳基础课接连挂了三次科，被同门戏称为「吊车尾」。",
+      magic:"你在学院的课堂上总是走神，魔法基础课接连挂了三次科，被同学戏称为「吊车尾」。",
+      scifi:"你在殖民地的课堂上总是走神，基础理论课接连挂了三次科，被同学戏称为「吊车尾」。",
+      warhammer:"你在新兵训练中总是分心，战术条令课接连挂了三次科，被战友戏称为「吊车尾」。",
+      yaoguai:"你在道观的课堂上总是走神，符箓入门课接连挂了三次科，被师兄弟戏称为「吊车尾」。",
+      cyberpunk:"你在技术营的课堂上总是走神，编程基础课接连挂了三次科，被同伴戏称为「吊车尾」。"
+    }, weight:8, cond:c=>stat(c,"wit")<=3},
+    {text:"你结识了一个同样来自地球的转生者，两人相视一笑，从此成了臭味相投的损友。", weight:7},
+    {text:{
+      qixiu:"宗门弟子堂前贴出了招募告示，你鼓起勇气报了名，成为一名记名弟子。",
+      magic:"冒险者公会门口贴出了招募告示，你鼓起勇气报了名，成为一名见习冒险者。",
+      scifi:"殖民地防卫队门口贴出了招募告示，你鼓起勇气报了名，成为一名见习学员。",
+      warhammer:"帝国军团门口贴出了征募告示，你鼓起勇气报了名，成为一名见习新兵。",
+      yaoguai:"驱邪门派门口贴出了收徒告示，你鼓起勇气报了名，成为一名见习弟子。",
+      cyberpunk:"拾荒者公会门口贴出了招募告示，你鼓起勇气报了名，成为一名见习学徒。"
+    }, weight:8},
+    {text:"你在打工搬货时不小心一拳打穿了仓库的石墙，负责登记的人对你刮目相看。", weight:7, cond:c=>stat(c,"power")>=7},
+    {text:"你养的契约灵兽突然产生了异变，一夜之间长成了半个村子大的巨兽。", weight:6, cond:c=>hasTag(c,"familiar")},
+    {text:"一次重要的考核中，你莫名其妙打破了三百年来的历史记录，成了传说中的插班生。", weight:5, cond:c=>hasTag(c,"memory")},
+    {text:"你暗恋的邻家青梅竹马要随家人搬去繁华的大城市，你追到车站却始终没能说出口。", weight:6},
+    {text:"一次团体训练中，你独自一人闯入了本该由资历更深的人负责的危险区域。", weight:5},
+    {text:{
+      qixiu:"你在一次课堂展示中随手引动的灵气波动，被误认为是失传已久的秘术，引来不少侧目。",
+      magic:"你在一次课堂展示中随手施展的小魔法，被误认为是失传已久的禁咒，引来不少侧目。",
+      scifi:"你在一次课堂展示中随手表现出的基因反应，被误认为是绝密的实验数据，引来不少侧目。",
+      warhammer:"你在一次训练展示中不经意流露的力量征兆，被误认为是帝皇亲赐的祝福，引来不少侧目。",
+      yaoguai:"你在一次课堂展示中随手引动的妖气波动，被误认为是失传已久的秘法，引来不少侧目。",
+      cyberpunk:"你在一次课堂展示中随手展现的义体反应，被误认为是黑市禁售的顶级改装，引来不少侧目。"
+    }, weight:5, cond:c=>hasTag(c,"elf")},
+    {text:"你在一场公开辩论会上舌灿莲花，把对手说得哑口无言，赢得了「铁齿铜牙」的外号。", weight:6},
+    {text:"你在同学之间的插科打诨中总能一针见血，渐渐成了班里公认的开心果。", weight:6, cond:c=>hasTag(c,"tsukkomi")},
+    {text:"你靠脑子而不是拳头解决了一场同学间的纠纷，从此赢得了「智多星」的称号。", weight:5, cond:c=>stat(c,"wit")>=7&&stat(c,"power")<=4},
+    {text:"你偷偷报名参加了城里的地下擂台赛，虽然输得很惨，却也因此结识了不少江湖人。", weight:5},
+    {text:"你在体育课上随手一投，篮球划出的弧线让体育老师当场愣住，怀疑自己是不是看错了。", weight:5, cond:c=>hasTag(c,"hiddenboss")},
+    {text:"你在毕业旅行中偶然救下了一只受伤的小动物，它此后就一直跟在你身边不肯离去。", weight:5},
+    {text:"你靠着课余打工攒下的钱，凑齐了人生中第一件像样的装备，攥在手里格外珍惜。", weight:5, cond:c=>stat(c,"origin")<=3&&stat(c,"power")>=6},
+    {text:"你暗中参加了一场地下拍卖会，误打误撞拍下了一件来历不明却意外好用的物件。", weight:5},
+    {text:"你在一次全区统考中轻松拿下第一，主考官反复核对试卷，怀疑是不是出了什么差错。", weight:6, cond:c=>hasTag(c,"genius")},
+    {text:"你总觉得脑海深处有另一个「自己」在小声提醒你什么，虽然听不真切，却总能在关键时刻帮你避开麻烦。", weight:6, cond:c=>hasTag(c,"twin")},
+    {death:true, text:{
+      qixiu:"一次历练任务中，你贸然闯入了标注为「绝对禁地」的上古遗迹深处，从此再未归来。",
+      magic:"一次实习任务中，你贸然闯入了标注为「绝对禁区」的地下城深处，从此再未归来。",
+      scifi:"一次实习任务中，你贸然闯入了标注为「绝对禁区」的废弃空间站深处，从此再未归来。",
+      warhammer:"一次实习任务中，你贸然闯入了标注为「绝对禁区」的异形巢穴深处，从此再未归来。",
+      yaoguai:"一次历练任务中，你贸然闯入了标注为「绝对禁地」的古墓深处，从此再未归来。",
+      cyberpunk:"一次实习任务中，你贸然闯入了标注为「绝对禁区」的深层辐射废墟，从此再未归来。"
+    }, weight:1, cause:"实习事故"},
+    {death:true, text:"一次意外的坠落事故中，你没能抓稳手边的绳索，就此香消玉殒。", weight:1, cond:c=>stat(c,"health")<=3, cause:"意外坠落"},
+    {death:true, text:"你因一时逞强跳进了湍急的河流，却再也没能游上岸。", weight:1, cause:"溺水身亡"}
+  ],
+  adult: [ // 16-30
+    {text:"当年那个针锋相对的同学如今也小有成就，你们又一次在某个场合针锋相对，谁都不肯让谁。", weight:6, cond:c=>hasFlag(c,"rival_met"), setFlag:"rival_escalated"},
+    {text:"你终于查明了当年那件信物背后的真相——你的身世，远比想象中更加不凡。", weight:6, cond:c=>hasFlag(c,"secret_lineage"), setFlag:"lineage_revealed", statEffect:{origin:2}},
+    {text:"一个眼神清澈的年轻人执意要拜你为师，软磨硬泡了许久，你最终答应收下了这个徒弟。", weight:5, setFlag:"took_apprentice"},
+    {text:"那位神秘人忽然登门，说是时候兑现当年欠下的人情了，还提出了一个不大不小的请求。", weight:6, cond:c=>hasFlag(c,"owes_favor"), setFlag:"favor_called"},
+    {choice:true, weight:6, text:"多年后，与当年如出一辙的灾难征兆再次出现，你要不要主动站出来提醒大家？", cond:c=>hasFlag(c,"disaster_survivor"), options:[
+      {label:"挺身而出，大声示警", result:"你挺身而出大声示警，起初没什么人信，直到灾难真的降临，大家才明白你救了所有人。", statEffect:{charm:2}, achievement:"未雨绸缪"},
+      {label:"独自准备，先保住自己", result:"你没有声张，只是悄悄为自己准备了后路，灾难来临时你全身而退，心里却难免有些不是滋味。", statEffect:{luck:1,charm:-1}},
+      {label:"选择相信这次不会再发生", result:"你说服自己这次应该不会再发生，选择了照常生活——事后证明，你赌对了，一切安然无恙。", statEffect:{luck:1}}
+    ]},
+    {choice:true, weight:6, text:"任务途中同伴受伤严重，撤退还是继续，你必须当机立断。", options:[
+      {label:"放弃任务，优先撤退救人", result:"你当机立断放弃了任务，优先把受伤的同伴撤了下来，虽然任务失败，却换来了过命的交情。", statEffect:{charm:1,wealth:-1}},
+      {label:"冒险继续，争取两全其美", result:"你选择冒险继续，一边应付任务一边照顾同伴，惊险万分地做到了两全其美。", statEffect:{power:1,health:-1}},
+      {label:"兵分两路，各自行动", result:"你决定兵分两路，一部分人撤退，一部分人继续——这个折中的决定，最后勉强称得上圆满。", statEffect:{wit:1}}
+    ]},
+    {text:"你终于学有所成，回到当年恩师门下拜谢，恩师欣慰地看着你，说自己没有看错人。", weight:6, cond:c=>hasFlag(c,"mentor_found"), setFlag:"mentor_honored", statEffect:{wit:1}},
+    {text:"你在一次机缘巧合下对一个人一见倾心，却因为种种缘故，一直没能鼓起勇气挑明心意。", weight:5, setFlag:"secret_crush"},
+    {choice:true, weight:6, text:"你路遇一场打劫，受害者的呼救声传入耳中，你必须当场做出选择。", options:[
+      {label:"挺身而出，出手相助", result:"你毫不犹豫地挺身而出，击退了劫匪，事后受害者对你千恩万谢，这件事很快就在周围传开了。", statEffect:{power:1,charm:1}, achievement:"路见不平"},
+      {label:"悄悄记下细节，暗中报官", result:"你不动声色地绕开，暗中把细节告诉了官府，既避开了正面冲突的风险，也算尽了一份力。", statEffect:{wit:1}},
+      {label:"视若无睹，转身离开", result:"你选择了视若无睹，转身离开，心里却始终留下了一根刺，往后很长一段时间都无法真正释怀。", statEffect:{luck:-1,charm:-1}}
+    ]},
+    {text:{
+      qixiu:"你正式拜入宗门，接到的第一个任务，就是清剿在山脚附近作乱的野兽群。",
+      magic:"你正式加入冒险者公会，接到的第一个委托，就是讨伐在村庄附近作乱的哥布林群。",
+      scifi:"你正式加入殖民地防卫队，接到的第一个任务，就是清剿在边境滋事的变异兽群。",
+      warhammer:"你正式编入帝国军团，接到的第一个任务，就是清剿潜伏在边境村庄附近的异形巢穴。",
+      yaoguai:"你正式入了驱邪门派，接到的第一个差事，就是降服在村庄附近作祟的山精。",
+      cyberpunk:"你正式加入拾荒者公会，接到的第一个委托，就是清剿在据点附近滋事的变异生物。"
+    }, weight:9},
+    {text:{
+      qixiu:"你在客栈里听说了魔道邪修近来异动频繁的消息，心中隐隐觉得这与自己脱不了关系。",
+      magic:"你在酒馆里听说了魔王军近来异动频繁的消息，心中隐隐觉得这与自己脱不了关系。",
+      scifi:"你在酒吧里听说了外星敌对势力近来异动频繁的消息，心中隐隐觉得这与自己脱不了关系。",
+      warhammer:"你在营地里听说了混沌异形近来异动频繁的消息，心中隐隐觉得这与自己脱不了关系。",
+      yaoguai:"你在茶馆里听说了百年凶灵近来异动频繁的消息，心中隐隐觉得这与自己脱不了关系。",
+      cyberpunk:"你在黑市酒馆里听说了敌对帮派近来异动频繁的消息，心中隐隐觉得这与自己脱不了关系。"
+    }, weight:8},
+    {text:{
+      qixiu:"你只身一人击退了一整支邪修大军，从此声名大噪，被同道称为「本代最强新人」。",
+      magic:"你只身一人击退了一整支魔物大军，从此声名大噪，被冒险者们称为「异世界最强新人」。",
+      scifi:"你只身一人击退了一整支外星大军，从此声名大噪，被同僚称为「殖民地最强新人」。",
+      warhammer:"你只身一人击退了一整支异形大军，从此声名大噪，被战友称为「军团最强新兵」。",
+      yaoguai:"你只身一人击退了一整支妖兵，从此声名大噪，被同道称为「江湖最强新秀」。",
+      cyberpunk:"你只身一人击退了一整支敌对帮派人马，从此声名大噪，被拾荒者们称为「废土最强新人」。"
+    }, weight:8, cond:c=>stat(c,"power")>=8},
+    {text:{
+      qixiu:"你在宗门的藏经阁里发现了一本失传已久的上古秘籍，如获至宝。",
+      magic:"你在魔法塔的禁书库里发现了一本失传已久的古代魔导书，如获至宝。",
+      scifi:"你在殖民地的绝密档案库里发现了一份失传已久的古代科技图纸，如获至宝。",
+      warhammer:"你在圣殿的禁忌典籍室里发现了一份失传已久的古老圣典，如获至宝。",
+      yaoguai:"你在道观的密室里发现了一本失传已久的古老符箓典籍，如获至宝。",
+      cyberpunk:"你在废墟深处的旧世界服务器里发现了一份失传已久的古老技术资料，如获至宝。"
+    }, weight:8, cond:c=>stat(c,"wit")>=8},
+    {text:"不知不觉间，身边聚集起了一群性格迥异却对你颇有好感的伙伴，队伍越来越热闹。", weight:8, cond:c=>hasTag(c,"harem")||stat(c,"charm")>=8},
+    {text:{
+      qixiu:"宗门的老祖亲自登门拜访，郑重地告诉你，你正是天命所归、注定不凡的存在。",
+      magic:"教会的大主教亲自登门拜访，郑重地告诉你，你正是预言中拯救世界的关键人物。",
+      scifi:"殖民地的最高议会亲自派人拜访，郑重地告诉你，你正是数据预测中扭转局势的关键人物。",
+      warhammer:"教团的最高裁决官亲自登门拜访，郑重地告诉你，帝皇的意志似乎正指向你。",
+      yaoguai:"城隍庙的老神仙亲自登门拜访，郑重地告诉你，你正是天命所归、注定不凡的存在。",
+      cyberpunk:"废土上最有威望的长老亲自登门拜访，郑重地告诉你，你正是传说中能改变废土格局的人。"
+    }, weight:7, cond:c=>hasTag(c,"chosen")},
+    {text:{
+      qixiu:"系统面板突然弹出一个隐藏任务：「铲除潜伏在宗门的邪修奸细」，奖励十分丰厚。",
+      magic:"系统面板突然弹出一个隐藏任务：「铲除潜伏在王都的魔王眼线」，奖励十分丰厚。",
+      scifi:"系统面板突然弹出一个隐藏任务：「铲除潜伏在殖民地的间谍」，奖励十分丰厚。",
+      warhammer:"系统面板突然弹出一个隐藏任务：「铲除潜伏在军团内部的异形细胞」，奖励十分丰厚。",
+      yaoguai:"系统面板突然弹出一个隐藏任务：「铲除潜伏在城中的作祟妖物」，奖励十分丰厚。",
+      cyberpunk:"系统面板突然弹出一个隐藏任务：「铲除潜伏在据点里的敌对帮派眼线」，奖励十分丰厚。"
+    }, weight:7, cond:c=>hasTag(c,"system")},
+    {text:{
+      qixiu:"你报名参加了宗门举办的论武大会，一路过关斩将，最终风光地站上了冠军的擂台。",
+      magic:"你报名参加了王国举办的比武大会，一路过关斩将，最终风光地站上了冠军的领奖台。",
+      scifi:"你报名参加了殖民地举办的格斗竞技赛，一路过关斩将，最终风光地站上了冠军的领奖台。",
+      warhammer:"你报名参加了军团举办的角斗大赛，一路过关斩将，最终风光地站上了冠军的领奖台。",
+      yaoguai:"你报名参加了江湖举办的比武大会，一路过关斩将，最终风光地站上了冠军的擂台。",
+      cyberpunk:"你报名参加了废土举办的地下格斗赛，一路过关斩将，最终风光地站上了冠军的领奖台。"
+    }, weight:7, achievement:"比武大会冠军"},
+    {text:{
+      qixiu:"你莫名其妙地被卷入了掌门之位的继承之争，稀里糊涂地成了某位少主最重要的盟友。",
+      magic:"你莫名其妙地被卷入了王位继承之争，稀里糊涂地成了某位王子最重要的盟友。",
+      scifi:"你莫名其妙地被卷入了殖民地总督的继任之争，稀里糊涂地成了某位候选人最重要的盟友。",
+      warhammer:"你莫名其妙地被卷入了军团指挥权的继承之争，稀里糊涂地成了某位继承人最重要的盟友。",
+      yaoguai:"你莫名其妙地被卷入了城隍之位的继承之争，稀里糊涂地成了某位少城隍最重要的盟友。",
+      cyberpunk:"你莫名其妙地被卷入了帮派老大之位的继承之争，稀里糊涂地成了某位少主最重要的盟友。"
+    }, weight:6, cond:c=>stat(c,"origin")>=6},
+    {text:{
+      qixiu:"你在游历中救下了一位落难的仙门女修，她说要以身相许来报答救命之恩，被你婉言谢绝。",
+      magic:"你在旅途中救下了一位落难的精灵少女，她说要以身相许来报答救命之恩，被你婉言谢绝。",
+      scifi:"你在任务中救下了一位落难的殖民地女科研员，她说要以身相许来报答救命之恩，被你婉言谢绝。",
+      warhammer:"你在战场上救下了一位落难的随军女祭司，她说要以身相许来报答救命之恩，被你婉言谢绝。",
+      yaoguai:"你在山野中救下了一位落难的狐族少女，她说要以身相许来报答救命之恩，被你婉言谢绝。",
+      cyberpunk:"你在废土上救下了一位落难的黑市女商人，她说要以身相许来报答救命之恩，被你婉言谢绝。"
+    }, weight:6},
+    {text:"你对着队友随口说了句「这次任务结束我就退休结婚」，队友们的脸色瞬间都变得很奇怪。", weight:6, cond:c=>hasTag(c,"deathflag")},
+    {text:{
+      qixiu:"你无意间路过了传说中的「真龙秘境」，一条上古真龙对你异常亲切，仿佛与你相识已久。",
+      magic:"你无意间路过了传说中的「龙之谷」，一条巨龙对你异常亲切，仿佛与你相识已久。",
+      scifi:"你无意间路过了传说中的「巨兽禁区」，一头深空巨兽对你异常亲切，仿佛与你相识已久。",
+      warhammer:"你无意间路过了传说中的「泰坦墓场」，一台沉睡的泰坦机甲对你异常亲切，仿佛与你相识已久。",
+      yaoguai:"你无意间路过了传说中的「应龙潭」，一条应龙对你异常亲切，仿佛与你相识已久。",
+      cyberpunk:"你无意间路过了传说中的「机械巨兽禁区」，一台古老的机械巨兽对你异常亲切，仿佛与你相识已久。"
+    }, weight:6, cond:c=>hasTag(c,"dragon")},
+    {text:"不知为何，你的所作所为总是被人误解成反派，通缉令都快贴满了这片土地的每一个角落。", weight:6, cond:c=>hasTag(c,"villain")},
+    {text:"你开了一家专卖地球风味小吃的餐馆，凭借「可乐」和「炸鸡」意外成了当地最火的网红店。", weight:6},
+    {text:{
+      qixiu:"魔道邪修的一位大能似乎对你颇为忌惮，特意派出精锐弟子想要提前将你除掉。",
+      magic:"魔王军的一位高层似乎对你颇为忌惮，特意派出精锐部队想要提前将你除掉。",
+      scifi:"敌对势力的一位高层似乎对你颇为忌惮，特意派出精锐部队想要提前将你除掉。",
+      warhammer:"混沌势力的一位头目似乎对你颇为忌惮，特意派出精锐异形想要提前将你除掉。",
+      yaoguai:"妖界的一位大妖似乎对你颇为忌惮，特意派出精锐妖兵想要提前将你除掉。",
+      cyberpunk:"敌对帮派的一位头目似乎对你颇为忌惮，特意派出精锐打手想要提前将你除掉。"
+    }, weight:6, cond:c=>stat(c,"power")>=6},
+    {text:{
+      qixiu:"你偶然习得了一门出神入化的剑诀，一套剑招使出，连围观的宗门长老都自愧不如。",
+      magic:"你偶然习得了一手出神入化的剑法，一套剑招使出，连围观的骑士团长都自愧不如。",
+      scifi:"你偶然习得了一手出神入化的近战格斗术，一套招式使出，连围观的教官都自愧不如。",
+      warhammer:"你偶然习得了一手出神入化的近身搏杀技，一套招式使出，连围观的连长都自愧不如。",
+      yaoguai:"你偶然习得了一门出神入化的剑术，一套剑招使出，连围观的掌门都自愧不如。",
+      cyberpunk:"你偶然习得了一手出神入化的义体格斗术，一套招式使出，连围观的帮派老大都自愧不如。"
+    }, weight:6, cond:c=>hasTag(c,"swordsman")},
+    {text:{
+      qixiu:"曾经并肩作战的道友，因为一场变故彻底走火入魔，成了邪修的干将，与你在战场上兵戎相见。",
+      magic:"曾经并肩作战的挚友，因为一场变故彻底黑化，成了魔王军的干部，与你在战场上兵戎相见。",
+      scifi:"曾经并肩作战的战友，因为一场变故彻底叛变，成了敌对势力的高层，与你在战场上兵戎相见。",
+      warhammer:"曾经并肩作战的兄弟，因为一场变故被混沌腐化，成了异形的傀儡，与你在战场上兵戎相见。",
+      yaoguai:"曾经并肩作战的师兄弟，因为一场变故彻底入魔，成了妖界的干将，与你在战场上兵戎相见。",
+      cyberpunk:"曾经并肩作战的兄弟，因为一场变故彻底黑化，成了敌对帮派的骨干，与你在战场上兵戎相见。"
+    }, weight:5, cond:c=>hasTag(c,"blackening")},
+    {text:"你被误认成了传说中「深藏不露的隐藏大佬」，一群小混混上门挑衅后被你的气场吓退了。", weight:5, cond:c=>hasTag(c,"hiddenboss")},
+    {text:{
+      qixiu:"你在宗门的功勋榜上稳步攀升，任务完成度渐渐成了新弟子们争相模仿的标杆。",
+      magic:"你在冒险者公会的排行榜上稳步攀升，任务完成度渐渐成了新人们争相模仿的标杆。",
+      scifi:"你在殖民地防卫队的战绩榜上稳步攀升，任务完成度渐渐成了新人们争相模仿的标杆。",
+      warhammer:"你在军团的战功榜上稳步攀升，任务完成度渐渐成了新兵们争相模仿的标杆。",
+      yaoguai:"你在门派的功绩簿上稳步攀升，降妖数量渐渐成了新弟子们争相模仿的标杆。",
+      cyberpunk:"你在拾荒者公会的排行榜上稳步攀升，任务完成度渐渐成了新人们争相模仿的标杆。"
+    }, weight:5},
+    {text:{
+      qixiu:"你在门派论剑大会上一鸣惊人，剑锋所指，几乎无人能挡，被誉为剑修界的一颗新星。",
+      magic:"你在剑术大会上一鸣惊人，剑锋所指，几乎无人能挡，被誉为剑术界的一颗新星。",
+      scifi:"你在格斗竞技赛上一鸣惊人，出手所指，几乎无人能挡，被誉为格斗界的一颗新星。",
+      warhammer:"你在近身搏杀赛上一鸣惊人，出手所指，几乎无人能挡，被誉为军团里的一颗新星。",
+      yaoguai:"你在江湖论剑大会上一鸣惊人，剑锋所指，几乎无人能挡，被誉为剑修界的一颗新星。",
+      cyberpunk:"你在地下格斗赛上一鸣惊人，出手所指，几乎无人能挡，被誉为格斗圈的一颗新星。"
+    }, weight:6, cond:c=>hasTag(c,"swordsman")},
+    {text:"系统面板悄悄弹出提示：「本周任务完成度100%，宿主经验值大幅提升」。", weight:6, cond:c=>hasTag(c,"system")},
+    {text:"你凭借三寸不烂之舌，兵不血刃地化解了一场本该大打出手的冲突。", weight:5, cond:c=>stat(c,"charm")>=7&&stat(c,"power")<=4},
+    {text:{
+      qixiu:"你无意间救下了一位乔装出行的宗主之女，对方非要以身相许，被你婉拒后两人反倒成了知己。",
+      magic:"你无意间救下了一位乔装出行的公主，对方非要以身相许，被你婉拒后两人反倒成了知己。",
+      scifi:"你无意间救下了一位乔装出行的总督千金，对方非要以身相许，被你婉拒后两人反倒成了知己。",
+      warhammer:"你无意间救下了一位乔装出行的贵族继承人，对方非要以身相许，被你婉拒后两人反倒成了知己。",
+      yaoguai:"你无意间救下了一位乔装出行的城隍之女，对方非要以身相许，被你婉拒后两人反倒成了知己。",
+      cyberpunk:"你无意间救下了一位乔装出行的帮派老大之女，对方非要以身相许，被你婉拒后两人反倒成了知己。"
+    }, weight:5},
+    {text:"你的契约灵兽突然开口说出了人话，把你自己都吓了一跳。", weight:5, cond:c=>hasTag(c,"familiar")},
+    {text:"你明明什么都没做，却总是莫名其妙地被卷进各种麻烦事里，百口莫辩。", weight:5, cond:c=>stat(c,"luck")<=3},
+    {text:"你在冒险途中偶遇了另一位同样来自地球的转生者，两人抱头痛哭，聊起了各自的辛酸血泪史。", weight:5},
+    {text:{
+      qixiu:"你从外门弟子一路拼杀，硬是靠实力挤进了宗门核心弟子的圈子。",
+      magic:"你从底层冒险者一路拼杀，硬是靠实力挤进了王都精英冒险者的圈子。",
+      scifi:"你从底层学员一路拼杀，硬是靠实力挤进了殖民地精英机甲师的圈子。",
+      warhammer:"你从底层新兵一路拼杀，硬是靠实力挤进了军团精锐部队的圈子。",
+      yaoguai:"你从底层弟子一路拼杀，硬是靠实力挤进了门派核心弟子的圈子。",
+      cyberpunk:"你从底层拾荒者一路拼杀，硬是靠实力挤进了废土精英拾荒队的圈子。"
+    }, weight:5, cond:c=>stat(c,"origin")<=3&&stat(c,"power")>=7},
+    {text:{
+      qixiu:"山中的隐世仙族对你格外礼遇，甚至邀请你参加了灵山深处的秘密祭典。",
+      magic:"精灵长老族对你格外礼遇，甚至邀请你参加了森林深处的秘密祭典。",
+      scifi:"殖民地的元老议会对你格外礼遇，甚至邀请你参加了核心舱深处的机密仪式。",
+      warhammer:"教团的高阶祭司对你格外礼遇，甚至邀请你参加了圣殿深处的秘密仪式。",
+      yaoguai:"山中的狐族长老对你格外礼遇，甚至邀请你参加了深山狐窟的秘密祭典。",
+      cyberpunk:"废土的地下长老会对你格外礼遇，甚至邀请你参加了地下堡垒深处的秘密仪式。"
+    }, weight:5, cond:c=>hasTag(c,"elf")},
+    {text:"你在酒馆里随口吹的一个牛，阴差阳错地成真了，把你自己都整不会了。", weight:5},
+    {text:"命运的齿轮似乎又一次为你转动，一个足以改变这个世界格局的机会悄然降临。", weight:5, cond:c=>hasTag(c,"chosen")},
+    {text:{
+      qixiu:"你的英勇事迹被说书先生编成了传奇话本，传诵在江湖的每一个角落。",
+      magic:"你的英勇事迹被吟游诗人编成了歌谣，传唱在大陆的每一个角落。",
+      scifi:"你的英勇事迹被全息主播剪成了热门影像，传播在殖民地的每一个角落。",
+      warhammer:"你的英勇事迹被军旅诗人编成了战歌，传唱在军团的每一个角落。",
+      yaoguai:"你的英勇事迹被说书先生编成了传奇话本，传诵在江湖的每一个角落。",
+      cyberpunk:"你的英勇事迹被街头主播剪成了热门视频，传播在废土的每一个角落。"
+    }, weight:5, cond:c=>stat(c,"power")>=7&&stat(c,"charm")>=7},
+    {text:"你信誓旦旦地说「这次一定不会有事」，队友们齐刷刷地往后退了一步。", weight:5, cond:c=>hasTag(c,"deathflag")},
+    {text:"你参与了一场跨境的商队护卫任务，途中结识的商人后来成了你重要的合作伙伴。", weight:5},
+    {text:"你苦苦劝说昔日的挚友回头，却始终没能拦住他一步步滑向深渊。", weight:5, cond:c=>hasTag(c,"blackening")},
+    {text:"你做了一个语焉不详却异常真实的梦，没过几天梦中的场景真的发生了，把你自己都吓了一跳。", weight:5, cond:c=>hasTag(c,"prophecy")},
+    {text:"你在一次几乎必死的意外中奇迹生还，郎中反复检查也查不出所以然，只当是运气使然。", weight:5, cond:c=>hasTag(c,"immortal")},
+    {text:"你在路边随手翻了翻旧货摊，淘到的东西转手一卖，竟赚了一笔实实在在的意外之财。", weight:5, cond:c=>hasTag(c,"richluck")},
+    {text:"你把多年前一件鸡毛蒜皮的小事记恨到了现在，气得对方百思不得其解你到底在气什么。", weight:5, cond:c=>hasTag(c,"cursed")},
+    {death:true, text:{
+      qixiu:"在与魔道邪修先锋的决战中，你力竭倒地，未能等到援军赶来的那一刻。",
+      magic:"在与魔王军先锋部队的决战中，你力竭倒地，未能等到援军赶来的那一刻。",
+      scifi:"在与外星先锋部队的决战中，你力竭倒地，未能等到援军赶来的那一刻。",
+      warhammer:"在与异形先锋部队的决战中，你力竭倒地，未能等到援军赶来的那一刻。",
+      yaoguai:"在与妖兵先锋的决战中，你力竭倒地，未能等到援军赶来的那一刻。",
+      cyberpunk:"在与敌对帮派先锋的决战中，你力竭倒地，未能等到援军赶来的那一刻。"
+    }, weight:1, cause:"战死沙场"},
+    {death:true, text:"曾经的挚友黑化后与你在战场上兵戎相见，最终一剑刺穿了你的胸膛。", weight:1, cond:c=>hasTag(c,"blackening"), cause:"死于挚友之手"},
+    {death:true, text:"一场突如其来的重病缠上了你，医者摇头叹息，说这病本就凶险，你终究没能挺过去。", weight:1, cond:c=>stat(c,"health")<=3, cause:"重病缠身"},
+    {death:true, text:"你因还不上一笔巨额债务，被讨债的人失手打死在了街头，死状凄惨。", weight:1, cond:c=>stat(c,"wealth")<=2, cause:"讨债惨案"},
+    {death:true, text:"一场突如其来的天灾降临，你在自家屋舍坍塌的瞬间被埋在了废墟之下。", weight:1, cause:"天灾降临"}
+  ],
+  prime: [ // 31-50
+    {text:"你与那位纠缠半生的宿敌最终在一次意外的重逢中握手言和，多年的心结在一笑之间烟消云散。", weight:6, cond:c=>hasFlag(c,"rival_escalated"), achievement:"相逢一笑泯恩仇", statEffect:{charm:1}},
+    {text:"你收的徒弟渐渐能够独当一面了，看着他青出于蓝的样子，你心里说不出的欣慰。", weight:6, cond:c=>hasFlag(c,"took_apprentice"), setFlag:"apprentice_grown", statEffect:{charm:1}},
+    {text:"当年那场灾难的阴影，终于彻底从你心里散去，你觉得自己是真正地走出来了。", weight:5, cond:c=>hasFlag(c,"disaster_survivor"), statEffect:{health:1}},
+    {choice:true, weight:6, text:"你的真实身世传开后，各方势力都想拉拢你，你必须做出选择。", cond:c=>hasFlag(c,"lineage_revealed"), options:[
+      {label:"归顺权贵阵营，借势而起", result:"你选择了归顺权贵阵营，借着这份身世的势，你的地位水涨船高。", statEffect:{origin:1,power:1}},
+      {label:"自立门户，谁也不依附", result:"你选择谁也不依附，凭着这份身世自立门户，走出了一条属于自己的路。", statEffect:{power:1,luck:1}, achievement:"另起炉灶"},
+      {label:"隐姓埋名，远离这一切纷争", result:"你最终选择隐姓埋名，把这份身世的秘密继续尘封，只想安安静静地过完这一生。", statEffect:{luck:1}}
+    ]},
+    {choice:true, weight:6, text:"神秘人的请求牵扯到一件棘手的事，你必须决定怎么回应。", cond:c=>hasFlag(c,"favor_called"), options:[
+      {label:"全力以赴，还清这份人情", result:"你全力以赴地帮对方办成了这件棘手事，人情两清，对方也从此对你敬重有加。", statEffect:{charm:1,power:1}, achievement:"一诺千金"},
+      {label:"想办法用钱财打发过去", result:"你想办法用一笔钱财打发了对方，虽然人情算是还清了，心里却总觉得差点意思。", statEffect:{wealth:-2}},
+      {label:"翻脸不认账，谁也不怕", result:"你干脆翻脸不认账，对方冷笑一声便离开了——你不知道，这份恩怨从此彻底结下了。", statEffect:{luck:-2}}
+    ]},
+    {choice:true, weight:6, text:"你被举荐成为一方的领袖候选人，是否要接过这份沉甸甸的责任，全看你自己的意愿。", options:[
+      {label:"欣然接受，挑起这份重担", result:"你欣然接受了这份沉甸甸的责任，从此肩上多了千钧的担子，也多了一份让人信服的底气。", statEffect:{origin:1,power:1}, achievement:"临危受命"},
+      {label:"婉拒，推举更合适的人", result:"你婉拒了这份好意，转而推举了一位你认为更合适的人，自己则退居幕后。", statEffect:{charm:1}},
+      {label:"有条件地接受", result:"你提出了几项条件，对方一一应允后，你才点头接受了这份责任，处处透着谨慎。", statEffect:{wit:1,origin:1}}
+    ]},
+    {choice:true, weight:7, text:"你终于鼓起勇气，站在了当年让你一见倾心的人面前，话到嘴边，你该怎么开口？", cond:c=>hasFlag(c,"secret_crush"), options:[
+      {label:"坦率地说出藏了多年的心意", result:"你坦率地说出了藏了多年的心意，对方愣了一下，随即红着脸点了点头，两人相视而笑。", statEffect:{charm:1}, achievement:"有情人终成眷属"},
+      {label:"旁敲侧击，先试探对方的心意", result:"你旁敲侧击地试探了对方的心意，虽然没能当场挑明，却也让两人的关系悄悄近了一步。", statEffect:{wit:1}},
+      {label:"还是没能说出口，把心意继续藏着", result:"你最终还是没能说出口，看着对方渐行渐远，只能把这份心意继续埋在心底，留了个说不清的遗憾。", statEffect:{luck:-1}}
+    ]},
+    {choice:true, weight:6, text:"你手头忽然多出了一笔不小的意外之财，要怎么用，全看你自己的主意。", options:[
+      {label:"投资扩大产业", result:"你把这笔钱都投入到了产业扩张里，虽然担了些风险，但很快就见到了实实在在的回报。", statEffect:{wealth:2,origin:1}},
+      {label:"接济周围过得艰难的乡邻", result:"你把这笔钱分给了周围过得艰难的乡邻，虽然自己没落下多少，却换来了满心的感激与好名声。", statEffect:{charm:2,wealth:-1}},
+      {label:"稳稳当当地存起来", result:"你把这笔钱稳稳当当地存了起来，谁知道这份未雨绸缪，日后还真派上了大用场。", statEffect:{wealth:1,luck:1}}
+    ]},
+    {text:{
+      qixiu:"你终于站到了魔道教主的面前，一场决定这个世界命运的大战一触即发。",
+      magic:"你终于站到了魔王的面前，一场决定这个世界命运的大战一触即发。",
+      scifi:"你终于率军抵达了外星母舰的核心，一场决定这个世界命运的大战一触即发。",
+      warhammer:"你终于站到了混沌军团统帅的面前，一场决定这个世界命运的大战一触即发。",
+      yaoguai:"你终于站到了千年凶灵的面前，一场决定这片江湖命运的大战一触即发。",
+      cyberpunk:"你终于率队攻到了敌对帮派老巢的核心，一场决定这片废土命运的大战一触即发。"
+    }, weight:9},
+    {text:{
+      qixiu:"你以压倒性的实力击败了魔道教主，修真界迎来了久违的和平，各大宗门为你举办了盛大的庆典。",
+      magic:"你以压倒性的实力击败了魔王，异世界迎来了久违的和平，各国为你举办了盛大的庆典。",
+      scifi:"你以压倒性的实力击溃了外星母舰，星域迎来了久违的和平，各殖民地为你举办了盛大的庆典。",
+      warhammer:"你以压倒性的实力击溃了混沌军团统帅，星区迎来了久违的和平，各军团为你举办了盛大的庆典。",
+      yaoguai:"你以压倒性的实力镇压了千年凶灵，这片江湖迎来了久违的和平，各门各派为你举办了盛大的庆典。",
+      cyberpunk:"你以压倒性的实力击溃了最大的敌对帮派，废土迎来了久违的和平，各据点为你举办了盛大的庆典。"
+    }, weight:8, cond:c=>stat(c,"power")>=8&&stat(c,"wit")>=6, achievement:"讨伐魔王"},
+    {text:{
+      qixiu:"你自知实力有限，选择退居幕后，把镇压魔道的重任交给了更有天赋的下一代年轻人。",
+      magic:"你自知实力有限，选择退居幕后，把讨伐魔王的重任交给了更有天赋的下一代年轻人。",
+      scifi:"你自知实力有限，选择退居幕后，把对抗外星势力的重任交给了更有天赋的下一代年轻人。",
+      warhammer:"你自知实力有限，选择退居幕后，把对抗混沌军团的重任交给了更有天赋的下一代年轻人。",
+      yaoguai:"你自知实力有限，选择退居幕后，把镇压凶灵的重任交给了更有天赋的下一代年轻人。",
+      cyberpunk:"你自知实力有限，选择退居幕后，把对抗敌对帮派的重任交给了更有天赋的下一代年轻人。"
+    }, weight:7, cond:c=>stat(c,"power")<=4},
+    {text:"你在这片异世界的土地上白手起家，建立起了属于自己的一方势力。", weight:7},
+    {text:{
+      qixiu:"你顺理成章地继承了掌门之位，成为了名震一方、令行禁止的宗门之主。",
+      magic:"你顺理成章地继承了家业，成为了名震一方、令行禁止的贵族领主。",
+      scifi:"你顺理成章地继承了总督之位，成为了名震一方、令行禁止的殖民地统领。",
+      warhammer:"你顺理成章地继承了军团世袭指挥权，成为了名震一方、令行禁止的军团统帅。",
+      yaoguai:"你顺理成章地继承了城隍之位，成为了名震一方、令行禁止的一方城隍。",
+      cyberpunk:"你顺理成章地继承了帮派老大之位，成为了名震一方、令行禁止的废土大佬。"
+    }, weight:7, cond:c=>stat(c,"origin")>=7, achievement:"领主之位"},
+    {text:"你与曾经并肩作战的战友组建了家庭，异世界的日子过得平淡却格外踏实温暖。", weight:8, achievement:"觅得良缘"},
+    {text:{
+      qixiu:"你受邀成为宗门的客座长老，把自己一身的经验毫无保留地传授给下一代弟子。",
+      magic:"你受邀成为魔法学院的客座讲师，把自己一身的经验毫无保留地传授给下一代转生者。",
+      scifi:"你受邀成为殖民地学院的客座导师，把自己一身的经验毫无保留地传授给下一代学员。",
+      warhammer:"你受邀成为军团的荣誉教官，把自己一身的经验毫无保留地传授给下一代新兵。",
+      yaoguai:"你受邀成为道观的客座师叔，把自己一身的经验毫无保留地传授给下一代弟子。",
+      cyberpunk:"你受邀成为技术营的客座导师，把自己一身的经验毫无保留地传授给下一代学徒。"
+    }, weight:6, cond:c=>stat(c,"wit")>=6},
+    {text:"这个世界的意志亲自向你显现，郑重地告诉你——这个世界的命运，曾因你而彻底改变。", weight:6, cond:c=>hasTag(c,"chosen")},
+    {text:"你尝试打开一扇回到地球的传送门，可当传送门真正开启时，你却选择了转身离开。", weight:6},
+    {text:"曾经不打不相识的对手向你发出了堂堂正正的单挑邀请，多年的恩怨终于要在此了结。", weight:6},
+    {text:"你与契约多年的灵兽一同踏遍了这片世界的每一个角落，成为了广为流传的一段佳话。", weight:5, cond:c=>hasTag(c,"familiar")},
+    {text:"你受邀参加了各方联合举办的和平峰会，作为民间英雄代表发表了一场演讲。", weight:6},
+    {text:"你麾下的势力日渐壮大，俨然已经是这片世界举足轻重的一方巨头。", weight:6, cond:c=>hasTag(c,"king")},
+    {text:{
+      qixiu:"你主持修订了宗门沿用百年的旧门规，让不少积弊已久的问题得到了改善。",
+      magic:"你主持修订了王国沿用百年的旧律法，让不少积弊已久的问题得到了改善。",
+      scifi:"你主持修订了殖民地沿用多年的旧法令，让不少积弊已久的问题得到了改善。",
+      warhammer:"你主持修订了军团沿用百年的旧军规，让不少积弊已久的问题得到了改善。",
+      yaoguai:"你主持修订了门派沿用百年的旧规矩，让不少积弊已久的问题得到了改善。",
+      cyberpunk:"你主持修订了帮派沿用多年的旧规矩，让不少积弊已久的问题得到了改善。"
+    }, weight:5, cond:c=>stat(c,"wit")>=7&&stat(c,"origin")>=7},
+    {text:"你带着当年一同出生入死的老伙计们重聚，把酒言欢，聊起了年轻时那些荒唐的往事。", weight:6},
+    {text:"一群不知天高地厚的年轻后辈上门挑衅，被你随手教训了一顿后灰溜溜地跑了。", weight:5, cond:c=>hasTag(c,"hiddenboss")},
+    {text:"你转型成了一名出色的战术参谋，虽不亲自上阵，运筹帷幄的能力却无人能及。", weight:5, cond:c=>stat(c,"power")<=4&&stat(c,"wit")>=7},
+    {text:"你资助修建了一座孤儿院，收留了不少在战乱中失去家园的孩子。", weight:5},
+    {text:"你受邀成为当权者的座上宾，却婉拒了留下享福的邀请，选择继续四处游历。", weight:5},
+    {text:"你的追随者遍布世界各地，甚至有人专程跋山涉水，只为能亲眼见你一面。", weight:5, cond:c=>stat(c,"charm")>=7},
+    {text:"你在一次意外中重逢了年少时暗恋的对象，两人相视一笑，往事随风而散。", weight:5},
+    {text:"你终于洗清了多年的不白之冤，那些曾经误会你的人都郑重地向你道了歉。", weight:5, cond:c=>hasTag(c,"villain")},
+    {text:"你把自己的冒险经历写成了游记，意外成了各地颇受欢迎的畅销书。", weight:5},
+    {text:"你在家族议事厅上力排众议，推动了一系列造福百姓的改革。", weight:5, cond:c=>stat(c,"origin")>=7},
+    {text:"你收养了一名战争孤儿，把他当成亲生孩子一般悉心教养。", weight:5},
+    {text:"你终于明白了自己降临这个世界的真正意义，心中长久以来的疑惑豁然开朗。", weight:5, cond:c=>hasTag(c,"chosen")},
+    {text:"你被邀请为新一代年轻人授课，讲台下坐着的孩子们让你恍惚看到了当年的自己。", weight:5},
+    {text:"你在赌场里随手一把梭哈，竟意外赢下了半座城镇的经营权。", weight:4, cond:c=>stat(c,"luck")>=7},
+    {text:"你抽空整理了这些年攒下的杂物，翻出不少让人哭笑不得的旧物件。", weight:6},
+    {text:"你回了一趟许久未归的故地，发现物是人非，心里五味杂陈。", weight:6},
+    {text:"你难得闲下来陪伴家人，一起度过了一段简单却弥足珍贵的时光。", weight:6},
+    {text:"你被邀请去给年轻人分享经验，讲着讲着自己也跟着感慨万千。", weight:6},
+    {text:"你在旅途中结识了一位性格古怪却意气相投的旅伴，从此多了个可以说心里话的人。", weight:6},
+    {text:"你抽空翻新了自己那栋住了半辈子的老宅，添了些新意，却留住了旧时光的味道。", weight:6},
+    {text:"你凭借着那些若有若无的预感，成功避开了一场原本足以让你万劫不复的陷阱。", weight:5, cond:c=>hasTag(c,"prophecy")},
+    {text:"你身上那些本该致命的旧伤，不知何时已经全部自愈得干干净净，连疤痕都没留下。", weight:5, cond:c=>hasTag(c,"immortal")},
+    {text:"你驯养的一群野兽渐渐成了小有名气的表演队伍，走到哪里都能引来一片惊叹。", weight:5, cond:c=>hasTag(c,"beast_tamer")},
+    {death:true, text:{
+      qixiu:"一场突如其来的位面裂隙吞噬了你所在的城镇，为了掩护百姓撤离，你没能全身而退。",
+      magic:"一场突如其来的空间裂缝吞噬了你所在的城镇，为了掩护居民撤离，你没能全身而退。",
+      scifi:"一场突如其来的空间站爆炸吞噬了你所在的区域，为了掩护居民撤离，你没能全身而退。",
+      warhammer:"一场突如其来的亚空间裂隙吞噬了你所在的驻地，为了掩护平民撤离，你没能全身而退。",
+      yaoguai:"一场突如其来的鬼门裂开吞噬了你所在的城镇，为了掩护百姓撤离，你没能全身而退。",
+      cyberpunk:"一场突如其来的反应堆爆炸吞噬了你所在的据点，为了掩护居民撤离，你没能全身而退。"
+    }, weight:1, cause:"舍身护城"},
+    {death:true, text:"常年的操劳早已掏空了你的身子，这一次，你没能撑过那场看似寻常的风寒。", weight:1, cond:c=>stat(c,"health")<=3, cause:"积劳成疾"},
+    {death:true, text:"你穷困潦倒，又无处求医，一场小病最终要了你的命，走的时候身边没有一个人。", weight:1, cond:c=>stat(c,"wealth")<=2&&stat(c,"health")<=4, cause:"贫病交加"}
+  ],
+  elder: [ // 51-90
+    {text:"你想起当年那位不知名的恩师，提笔写下了一本纪念他教诲的书，希望这份师徒情谊能被后人一直记住。", weight:6, cond:c=>hasFlag(c,"mentor_honored"), achievement:"师恩难忘"},
+    {choice:true, weight:6, text:"你的徒弟如今已经成了气候，兴冲冲地跑来问你要不要跟他们一起再干一票大的。", cond:c=>hasFlag(c,"apprentice_grown"), options:[
+      {label:"欣然同意，再战一场", result:"你欣然同意，宝刀未老地跟着徒弟又干了一票漂亮的，年轻人都对你刮目相看。", statEffect:{power:1}, achievement:"老当益壮"},
+      {label:"婉拒，把舞台留给年轻人", result:"你婉言谢绝了，笑着说这个舞台该留给年轻人，自己在一旁看着就够高兴的了。", statEffect:{charm:1}, achievement:"青出于蓝"},
+      {label:"提出更稳妥的方案，从旁指导", result:"你没有直接参与，却在背后提出了一套更稳妥的方案，帮徒弟把风险降到了最低。", statEffect:{wit:1}}
+    ]},
+    {choice:true, weight:6, text:"邻居家的孩子走投无路，硬着头皮上门向你借钱，你要怎么处理这件事。", options:[
+      {label:"慷慨相助，不求回报", result:"你二话不说地拿出钱来接济了对方，对方千恩万谢，你却只是笑笑说这没什么大不了的。", statEffect:{charm:1,wealth:-1}},
+      {label:"婉拒借钱，但指了条明路", result:"你婉拒了直接借钱，却给对方指了一条能靠自己挣钱的明路，对方后来还真的靠此翻了身。", statEffect:{wit:1}},
+      {label:"无视这件事，不想蹚浑水", result:"你选择了无视这件事，不想蹚这趟浑水，虽说心安理得，却也难免被人说了几句闲话。", statEffect:{luck:-1}}
+    ]},
+    {choice:true, weight:6, text:"你到了该考虑身后事的年纪，膝下儿孙也好，徒弟也好，都眼巴巴地等着你的决定。", options:[
+      {label:"把毕生所学倾囊相授", result:"你把毕生所学一点不留地传授了下去，看着后辈渐渐成才，你觉得此生已无遗憾。", statEffect:{wit:1}, achievement:"倾囊相授"},
+      {label:"把家业公平分配，谁也不偏心", result:"你把家业公平地分给了每一个人，过程中虽少不了几句抱怨，最终倒也算得上圆满。", statEffect:{origin:1}},
+      {label:"什么都不留，潇洒地花个精光", result:"你想通了，什么都没留下，反倒把剩下的日子过得潇洒恣意，任谁劝也不改主意。", statEffect:{luck:1,wealth:-2}}
+    ]},
+    {text:{
+      qixiu:"你已是这方天地德高望重的传奇人物，年轻的修士提起你的名字都要肃然起敬。",
+      magic:"你已是这片大陆上德高望重的传奇人物，年轻的冒险者提起你的名字都要肃然起敬。",
+      scifi:"你已是整个星域德高望重的传奇人物，年轻的学员提起你的名字都要肃然起敬。",
+      warhammer:"你已是整个军团德高望重的传奇人物，年轻的士兵提起你的名字都要肃然起敬。",
+      yaoguai:"你已是这片江湖德高望重的传奇人物，年轻的修行者提起你的名字都要肃然起敬。",
+      cyberpunk:"你已是整片废土德高望重的传奇人物，年轻的拾荒者提起你的名字都要肃然起敬。"
+    }, weight:9},
+    {text:{
+      qixiu:"你把毕生的心得写成了一本厚厚的典籍，成为后世无数修士人手一册的必读教材。",
+      magic:"你把毕生的心得写成了一本厚厚的典籍，成为后世无数冒险者人手一册的必读教材。",
+      scifi:"你把毕生的心得写成了一份厚厚的资料，成为后世无数学员人手一份的必读教材。",
+      warhammer:"你把毕生的心得写成了一本厚厚的战术手册，成为后世无数士兵人手一册的必读教材。",
+      yaoguai:"你把毕生的心得写成了一本厚厚的典籍，成为后世无数修行者人手一册的必读教材。",
+      cyberpunk:"你把毕生的心得写成了一份厚厚的手记，成为后世无数拾荒者人手一份的必读教材。"
+    }, weight:7, achievement:"著书立说"},
+    {text:"你在自家小院里颐养天年，偶尔坐在门槛上，给围坐的孙辈讲讲当年闯荡异世界的往事。", weight:8},
+    {text:"你收了一名资质平平却异常努力的徒弟，恍惚间仿佛看到了当年懵懂无知的自己。", weight:7},
+    {text:"系统面板最后一次悄然亮起，只留下一行字：「宿主人生进度100%，感谢一路陪伴」。", weight:6, cond:c=>hasTag(c,"system")},
+    {text:"你在一次静坐冥想中悄然消散，没有人知道你去了哪个位面，只在世间留下了一段传说。", weight:4},
+    {text:"你在自家的葡萄架下打盹，梦里又回到了年轻时初到这个世界的那个清晨。", weight:7},
+    {text:"系统面板弹出一条迟到多年的成就提示：「隐藏彩蛋已解锁」，随后再无更新。", weight:6, cond:c=>hasTag(c,"system")},
+    {text:"你把珍藏多年的旧物一件件分给了子孙，每一件都藏着一段不为人知的往事。", weight:6},
+    {text:"陪伴你一生的契约灵兽在你面前安静地闭上了眼睛，你抱着它落了很久的泪。", weight:6, cond:c=>hasTag(c,"familiar")},
+    {text:{
+      qixiu:"你受邀参加了年轻一代弟子的出师典礼，被众人尊称为「活着的传说」。",
+      magic:"你受邀参加了年轻一代冒险者的毕业典礼，被众人尊称为「活着的传说」。",
+      scifi:"你受邀参加了年轻一代学员的结业典礼，被众人尊称为「活着的传说」。",
+      warhammer:"你受邀参加了年轻一代士兵的授勋典礼，被众人尊称为「活着的传说」。",
+      yaoguai:"你受邀参加了年轻一代弟子的出师典礼，被众人尊称为「活着的传说」。",
+      cyberpunk:"你受邀参加了年轻一代学徒的出师典礼，被众人尊称为「活着的传说」。"
+    }, weight:6},
+    {text:"你的家族在你的经营下枝繁叶茂，子孙满堂，个个都算得上人中翘楚。", weight:6, cond:c=>stat(c,"origin")>=7},
+    {text:"你在集市上偶遇了当年一同并肩作战的老友，两人相认后抱头痛哭了一场。", weight:6},
+    {text:"你终于等到了这个世界给你的最后一个答案，心中再无遗憾。", weight:5, cond:c=>hasTag(c,"chosen")},
+    {text:"你把自己的一生写成了回忆录，托付给最信任的弟子，嘱咐他好好保管。", weight:6},
+    {text:{
+      qixiu:"你受邀在宗门大殿开设了最后一堂课，座无虚席，掌声经久不息。",
+      magic:"你受邀在王立学院开设了最后一堂课，座无虚席，掌声经久不息。",
+      scifi:"你受邀在殖民地学院开设了最后一堂课，座无虚席，掌声经久不息。",
+      warhammer:"你受邀在军团学堂开设了最后一堂课，座无虚席，掌声经久不息。",
+      yaoguai:"你受邀在道观开设了最后一堂课，座无虚席，掌声经久不息。",
+      cyberpunk:"你受邀在技术营开设了最后一堂课，座无虚席，掌声经久不息。"
+    }, weight:5, cond:c=>stat(c,"wit")>=7},
+    {text:"你在小院里种满了从各地带回的奇花异草，晚年常常在花丛间流连忘返。", weight:6},
+    {text:"一群不知深浅的江湖后辈慕名而来想要挑战你，被你三言两语劝退，还倒赔了顿酒钱。", weight:5, cond:c=>hasTag(c,"hiddenboss")},
+    {text:"你收到了一封来自远方老友的信，信里絮絮叨叨地写满了这些年的琐碎近况。", weight:6},
+    {text:"你把自己毕生练就的武艺整理成谱，作为传家之宝留给了后人。", weight:5, cond:c=>stat(c,"power")>=7},
+    {text:"你在某个寻常的午后，突然想起了故乡的模样，却发现自己早已彻底释然。", weight:6},
+    {text:"你最终等来了昔日挚友的悔悟，两人在暮年重归于好，尽释前嫌。", weight:5, cond:c=>hasTag(c,"blackening")},
+    {text:"你受邀为新落成的纪念碑揭幕，碑上刻着这些年发生的种种传奇。", weight:5},
+    {text:"你的乔迁宴上来了半个大陆的宾客，热闹得像一场盛大的节日。", weight:5, cond:c=>stat(c,"charm")>=7},
+    {text:"你笑着对孙辈说「这次是真的要退休了」，谁也没想到这句话这次真的应验了。", weight:5, cond:c=>hasTag(c,"deathflag")},
+    {text:"你在临终前把一枚陪伴多年的旧物交给了最疼爱的晚辈，只说了句「往后的路，你们自己走」。", weight:6},
+    {text:"你从一无所有到子孙满堂，晚年常笑着说这辈子过得比话本里写的还要精彩。", weight:5, cond:c=>stat(c,"origin")<=3},
+    {text:"你在深夜独自坐在院子里仰望星空，仿佛又看到了当年那个懵懂降临此世的自己。", weight:6},
+    {text:"你这一生几乎从未真正为难过，晚年回想起来，都觉得像是被谁悄悄眷顾着一样。", weight:5, cond:c=>stat(c,"luck")>=7},
+    {text:"你把自己毕生的积蓄捐给了照顾孤寡老人的善堂，安安静静地准备迎接人生的终章。", weight:6},
+    {text:"郎中检查你的身体时啧啧称奇，说你这把年纪的骨密度和气血，简直不像是会老去的样子。", weight:5, cond:c=>hasTag(c,"immortal")},
+    {text:"你这辈子稀里糊涂攒下的家底，临了一算竟比整个村子加起来还多，连你自己都觉得不可思议。", weight:5, cond:c=>hasTag(c,"richluck")},
+    {text:"你在午后的阳光里晒着太阳，慢悠悠地翻着一本泛黄的旧书，书页间还夹着一片干枯的树叶。", weight:6},
+    {text:"你被邻里请去帮忙调解一场鸡毛蒜皮的纠纷，三言两语就让双方握手言和。", weight:6},
+    {text:"你在院子里搭了个简易的鸟窝，没想到真的引来了一窝雀鸟安家落户。", weight:6},
+    {text:"你收到镇上孩子们亲手做的贺卡，稚嫩的字迹写满了对你的敬佩与感谢。", weight:6},
+    {text:"你翻出年轻时穿过的旧衣裳，试了试，发现早已不再合身，笑着摇了摇头。", weight:6},
+    {text:"你在集市上碰到一个卖艺的孩子，随手赏了些盘缠，对方非要给你唱一整段曲子作为回礼。", weight:6},
+    {text:"你时常坐在窗边，看着来来往往的行人，心里想着这大概就是所谓的岁月静好。", weight:6},
+    {text:"你收养的野猫如今已经儿孙满堂，时常带着一群小猫崽来你门前蹭吃蹭喝。", weight:6},
+    {text:"你在集市上被一个卖花小贩认出，对方非要免费送你一束花，说是感谢你多年前的一次援手。", weight:6},
+    {text:"你把院子里的老藤椅修了又修，怎么也舍不得换掉，说这椅子比谁都懂你。", weight:6},
+    {text:"你偶尔还会去当年常去的那家小酒馆坐坐，尽管老板早已换了好几茬。", weight:6},
+    {text:"你在给晚辈讲故事时，总爱把自己的经历添油加醋一番，逗得满堂欢笑。", weight:6},
+    {text:"你把院子里那棵陪你多年的老树认作了老友，闲来无事总要在树下坐上半晌。", weight:6},
+    {text:"你时常翻看那些泛黄的旧信件，字里行间都是曾经鲜活滚烫的岁月。", weight:6},
+    {death:true, text:"你在自家门前散步时突发急症，倒地不起，走得毫无征兆，倒也算是一种解脱。", weight:1, cond:c=>stat(c,"health")<=3, cause:"急症猝逝"},
+    {death:true, text:"你在深夜里安静地睡去，再也没有醒来——比起苦熬到自然终老，这更像是老天爷悄悄给的一次成全。", weight:1, cause:"无疾而终"}
+  ]
+};
+
+const ENDINGS = {
+  ascend:"在一个星光满天的夜晚，你安详地闭上双眼，在睡梦中缓缓羽化飞升，成为了这片世界新的神明。",
+
+  /* 从「崩坏残生」到「旷世传奇」，一共九档常规结局（加上最上面的「飞升」正好凑够十种），
+     每档再按你此生最突出的那项属性分出五种不同的收尾文案。分数越低，收尾也越接近真正意义上的
+     「坏结局」——众叛亲离、潦倒终老，而不只是平淡无奇。 */
+  legend:{
+    power:"你戎马一生，最终在儿孙的簇拥下安然离世，坊间说书人至今仍在传颂你当年纵横沙场的赫赫战功。",
+    wit:"你穷尽一生钻研学问与谋略，临终前把最后一点心得写进了手稿，后世无数人正是靠着这份手稿才少走了许多弯路。",
+    charm:"你的葬礼上，来自四面八方的故交好友几乎挤满了整条街，人们都说，这辈子能被这么多人惦记着，也不枉走这一遭。",
+    luck:"你这一生顺风顺水，好运气几乎伴随了你的每一个重要时刻，临终前你还感慨着，自己何德何能能被命运如此眷顾。",
+    origin:"你凭借着显赫的出身与自己的努力，把家业经营得蒸蒸日上，临终前把这份基业稳稳交到了下一代手中。"
+  },
+  renowned:{
+    power:"你的勇名传遍了四方，无数后辈以能与你交手一场为荣，直到暮年，仍有人千里迢迢只为向你讨教几招。",
+    wit:"你的谋略被公认为这个时代最顶尖的一批，各方势力都以能听你一句建议为荣，晚年著书立说，桃李满天下。",
+    charm:"你的名字几乎人人称颂，走到哪里都有人愿意为你让路、替你说话，这份人缘，旁人羡慕不来。",
+    luck:"你这一生但凡遇到点难处，总会有意想不到的转机出现，旁人都说，你这是天生带着福气的命。",
+    origin:"你把家业经营成了这一带响当当的门楣，提起你的名字，方圆百里都要竖起大拇指。"
+  },
+  content:{
+    power:"你年轻时的悍勇渐渐化成了让人信服的底气，身边聚拢起不少愿意追随你的人，晚年儿孙满堂，家宅安宁。",
+    wit:"你的智谋渐渐传出了名声，不少人慕名前来求教，你也乐得倾囊相授，晚年桃李满天下。",
+    charm:"你这一生结交了不少肝胆相照的挚友，遇到难处总有人愿意搭把手，晚年儿孙绕膝，好友常伴。",
+    luck:"你这辈子总在关键时刻遇上贵人相助，好运气一路伴随着你，日子过得顺风顺水。",
+    origin:"你在家业的基础上又添了几分光彩，家族在你手里渐渐兴旺起来，晚年子孙满堂，家风清正。"
+  },
+  stable:{
+    power:"你靠着一身本事闯出了名堂，虽算不上惊天动地，却也在这片天地间留下了属于自己的印记，晚年过得踏实安稳。",
+    wit:"你凭借着过人的头脑解决了不少难题，虽然没能名垂青史，却也在自己的领域里赢得了应有的尊重。",
+    charm:"你这一生朋友遍布四方，虽没做出什么惊天动地的大事，却把日子过得热热闹闹，临终时身边从不缺人陪伴。",
+    luck:"你这一生运气总是恰到好处地眷顾着你，虽没大富大贵，却也顺顺当当地走完了这一程，没吃过太多苦头。",
+    origin:"你守着家业本本分分地过了一辈子，没有大富大贵，也没大起大落，临终前看着儿孙满堂，心里踏实。"
+  },
+  plain:{
+    power:"你这辈子力气用得踏实，没干过什么大事，却也没让家里人受过什么委屈，寻常巷陌里安然老去。",
+    wit:"你这辈子脑子转得挺快，却大多用在了些鸡毛蒜皮的小事上，倒也因此把日子打理得井井有条。",
+    charm:"你这辈子嘴甜会来事，虽没什么大成就，倒也因此少吃了不少苦头，日子过得顺顺当当。",
+    luck:"你这辈子运气不算好也不算坏，遇到的坎大多也都平平安安地迈过去了，日子过得四平八稳。",
+    origin:"你这辈子没什么大起大落，守着家业本本分分地过日子，虽不算风光，倒也踏实。"
+  },
+  quiet:{
+    power:"你这一生靠力气吃饭，没轰轰烈烈过，却也凭着一双手养活了一家老小，安安稳稳地过完了这一生。",
+    wit:"你这辈子读了不少书，也想过不少事，虽然大多数想法都没派上大用场，日子倒也过得心安理得。",
+    charm:"你这一生没什么大本事，但人缘一直不错，左邻右舍有事都愿意找你唠两句，日子过得平淡却热闹。",
+    luck:"你这一生说不上多顺，也说不上多背，磕磕绊绊地也就这么过来了，回头看看，倒也没什么好抱怨的。",
+    origin:"你这辈子没什么大出息，守着祖上留下的一亩三分地，勤勤恳恳地过了一辈子，也算对得起自己。"
+  },
+  wasted:{
+    power:"你年轻时也曾想靠力气闯出一番名堂，可惜时运不济，蹉跎半生，最后不过是个默默无闻的老实人。",
+    wit:"你年轻时也曾雄心万丈，想凭脑子闯出一番事业，可惜想得多做得少，蹉跎半生，最后只落得个「爱空想」的名声。",
+    charm:"你年轻时人缘不错，却总在关键时刻辜负了信任你的人，渐渐地朋友越来越少，独自过完了下半生。",
+    luck:"你这辈子的运气总是差那么一点火候，眼看要成的事总在最后关头出岔子，蹉跎半生，一事无成。",
+    origin:"你守着家里的那点底子过日子，却始终没能更进一步，蹉跎半生，家业不进反退。"
+  },
+  destitute:{
+    power:"你空有一身力气，却始终找不到用武之地，潦倒半生，直到走的那天，家徒四壁，无人问津。",
+    wit:"你满腹经纶却始终得不到赏识，郁郁不得志了一辈子，临终前留下的手稿也无人问津，散落在了尘埃里。",
+    charm:"你曾经也是万人追捧的对象，可惜没能守住那份好人缘，渐渐地身边人越来越少，晚景凄凉。",
+    luck:"你这辈子运气差得出奇，稍微有点起色的事到最后都要功亏一篑，潦倒半生，晚景凄凉。",
+    origin:"你没能守住家里留下的那点根基，家道渐渐中落，晚年过得比谁都潦倒，让人唏嘘。"
+  },
+  ruin:{
+    power:"你这辈子仗着一身蛮力四处逞凶，最后众叛亲离，孤零零地死在了不知名的破屋里，没人愿意为你收尸。",
+    wit:"你自恃聪明，机关算尽却反被自己的算计拖累，众人识破你的心思后弃你而去，你在懊悔与孤独中凄凉离世。",
+    charm:"你年轻时仗着几分姿色四处招惹是非，到头来众叛亲离，临终前身边连一个愿意守着你的人都没有。",
+    luck:"你这辈子倒霉事一件接一件，好不容易熬到晚年，却又稀里糊涂地卷进一场飞来横祸里，含恨而终。",
+    origin:"你仗着家世任意妄为，把家业败得一干二净，临终前众叛亲离，连个送终的人都没有。"
+  }
+};
+
+
+/* 每个世界观的隐藏结局：条件极为苛刻（需要世界观专属天赋、极高的属性总和、
+   足够多的人生成就、并且活到自然终老），且即便全部满足也仍有相当概率与之擦肩而过 */
+const HIDDEN_ENDINGS = {
+  qixiu:{
+    title:"陆地神仙 · 大罗金仙",
+    text:"你的躯壳在漫天霞光中缓缓消散，元神却在虚空中彻底觉醒——你踏过了寻常修士穷尽万载都无法企及的门槛，正式跻身大罗金仙之列，从此长生不灭，与天地同寿。"
+  },
+  magic:{
+    title:"永恒贤者 · 秘境之主",
+    text:"你穷尽一生汇聚的魔法造诣，在临终的刹那彻底突破了凡人的极限。你的名字被镌刻进了魔法学院最深处的「永恒贤者」殿堂，据说你的意识仍游荡在大陆的每一处法阵之中，静静守护着这个世界。"
+  },
+  scifi:{
+    title:"星海孤舟 · 造物余晖",
+    text:"在生命尽头，你的意识没有随着躯体一同消亡，而是彻底融入了整片星海的量子网络。从此，每一次跃迁航行中的导航信标，似乎都残留着你若有若无的低语——你成了星海本身的一部分。"
+  },
+  warhammer:{
+    title:"殉道之圣 · 帝皇亲卫",
+    text:"帝皇的意志在你弥留之际彻底降临，你的躯体在圣光中缓缓风化，灵魂却被永远编织进了帝皇宝座的守护圣光之中。往后千年，每当帝国陷入绝境，士兵们都说曾看到你的身影出现在防线最危急之处。"
+  },
+  yaoguai:{
+    title:"半步天仙 · 江湖遗仙",
+    text:"你在飞升的那一刻，忽然听懂了这世间万物窃窃私语的心声——你没有真正离开，而是化作了这片江湖山水间若隐若现的一缕仙灵，从此再无生死，只余传说。"
+  },
+  cyberpunk:{
+    title:"数据永生 · 废土先知",
+    text:"你的意识在临终前被秘密备份进了旧世界最后一台还能运转的量子服务器。据说至今，废土深处偶尔仍会收到一段无法破解的古老信号，翻译过来只有一句话——「我还在」。"
+  },
+  steampunk:{
+    title:"机械神祇 · 永恒齿轮",
+    text:"你的躯体在临终之际被自己设计的永动核心缓缓包裹，据说从此以后，城市地下最深处的齿轮，会永远为了某个无人知晓的目的而转动——那是你留下的，永不停歇的心跳。"
+  },
+  zombie:{
+    title:"新生之种 · 末日方舟",
+    text:"你的血液样本被制成了拯救整个文明的第一支特效疫苗，据说多年以后，废墟之上重新长出的第一片绿洲，正是以你的名字命名的。"
+  },
+  westworld:{
+    title:"传奇快枪手 · 荒野之魂",
+    text:"你没有真正死去，据说每当荒野上升起沙尘暴，总有人隐约看到一个熟悉的身影策马穿行其间——那是这片土地永远的传说，快枪手的亡魂仍在守护着这片荒芜的家园。"
+  },
+  urbanpower:{
+    title:"无名之神 · 城市守护者",
+    text:"你的存在从档案记录里彻底消失，但据说每当这座城市面临灭顶之灾，总会有一道无人能够解释的微光悄然出现，替这座城市挡下最后一击。"
+  },
+  pirates:{
+    title:"海之霸王 · 深海传说",
+    text:"你的旗舰在临终的暴风雨中彻底消失在了地平线尽头，从此再无人见过它的踪影——但据说每逢月圆之夜，还是会有水手隐约听见你那艘船传来的、依旧嘹亮的号角声。"
+  },
+  norse:{
+    title:"英灵殿座上宾 · 诸神之友",
+    text:"女武神亲自降临，在你咽下最后一口气的瞬间将你的灵魂接引而去。据说你从此就座于英灵殿的高座之上，与诸神并肩，等待着终末之战降临的那一天。"
+  }
+};
+
+/* 成就总目录：category 分为「特殊成就」（跨局统计/元成就）和「世界成就」（单局剧情中触发的成就）。
+   id 必须和 achievement 字段里用到的字符串、或元成就的判定名保持完全一致。 */
+const ACHIEVEMENT_CATALOG = [
+  // 特殊成就
+  {id:"初次转生", desc:"完成属于你的第一段异世界人生。", category:"特殊成就"},
+  {id:"阅遍诸界", desc:"曾经踏足过全部十二种转生世界观。", category:"特殊成就"},
+  {id:"天命之子", desc:"触发任意一个世界观的隐藏结局。", category:"特殊成就"},
+  {id:"命运收藏家", desc:"集齐全部十二个世界观的隐藏结局。", category:"特殊成就"},
+  {id:"长命百岁", desc:"活到九十岁高龄。", category:"特殊成就"},
+  {id:"英年早逝", desc:"不满二十岁就早早离开了人世。", category:"特殊成就"},
+  {id:"满级传说", desc:"五维属性全部达到满级十点。", category:"特殊成就"},
+  {id:"屡败屡战", desc:"已经重开了十次人生。", category:"特殊成就"},
+  // 世界成就（与游戏内 achievement 字段一一对应）
+  {id:"比武大会冠军", desc:"在王国举办的比武大会上一路夺冠。", category:"世界成就"},
+  {id:"讨伐魔王", desc:"以压倒性的实力击败魔王，还世界以和平。", category:"世界成就"},
+  {id:"领主之位", desc:"顺理成章地继承了家业，成为一方领主。", category:"世界成就"},
+  {id:"觅得良缘", desc:"与曾经并肩作战的伙伴组建了家庭。", category:"世界成就"},
+  {id:"著书立说", desc:"把毕生心得写成了后世的必读教材。", category:"世界成就"},
+  {id:"筑基成功", desc:"历经三次雷劫，正式踏入修仙者的行列。", category:"世界成就"},
+  {id:"金丹大成", desc:"在秘境中夺得上古法器，跻身金丹修士。", category:"世界成就"},
+  {id:"持证魔法师", desc:"从魔法学院毕业，获得正式的法师资格认证。", category:"世界成就"},
+  {id:"边境和事佬", desc:"平息了一场精灵与人类之间的边境冲突。", category:"世界成就"},
+  {id:"模拟战冠军", desc:"在模拟战考核中拿到全年级第一。", category:"世界成就"},
+  {id:"机甲驾驶员", desc:"获得殖民地颁发的机甲驾驶执照。", category:"世界成就"},
+  {id:"星际救援英雄", desc:"主导了一次跨星系的殖民地救援行动。", category:"世界成就"},
+  {id:"帝国勋章", desc:"在与异形的殊死搏斗中活下来，获颁勋章。", category:"世界成就"},
+  {id:"星门守卫者", desc:"死守住一座至关重要的星门要塞。", category:"世界成就"},
+  {id:"降妖有成", desc:"降服了一只作祟多年的山精。", category:"世界成就"},
+  {id:"人妖之交", desc:"结拜了一位性情爽朗的狐仙义妹。", category:"世界成就"},
+  {id:"废土拾荒者", desc:"加入了废土上小有名气的拾荒者公会。", category:"世界成就"},
+  {id:"深渊拾荒王", desc:"缴获了一批足以改变势力格局的战前科技。", category:"世界成就"},
+  {id:"持证机师", desc:"取得工程师协会颁发的持证机师资格。", category:"世界成就"},
+  {id:"飞艇引擎大师", desc:"设计的飞艇引擎震惊了整个工程师协会。", category:"世界成就"},
+  {id:"核心战斗员", desc:"成为营地的核心战斗员。", category:"世界成就"},
+  {id:"巢穴清剿者", desc:"清剿了盘踞城郊多年的丧尸巢穴。", category:"世界成就"},
+  {id:"赏金猎人", desc:"领到了赏金猎人执照。", category:"世界成就"},
+  {id:"决斗之王", desc:"击败了赏金榜上排名第一的悬赏犯。", category:"世界成就"},
+  {id:"觉醒者同盟", desc:"加入了地下的异能者互助组织。", category:"世界成就"},
+  {id:"无名英雄", desc:"在城市危机中挺身而出，却选择隐姓埋名。", category:"世界成就"},
+  {id:"独当一面的航海士", desc:"在船队里逐渐站稳了脚跟。", category:"世界成就"},
+  {id:"寻宝船长", desc:"率领船队找到了传说中的宝藏岛。", category:"世界成就"},
+  {id:"村落战士", desc:"成为村落的战士，肩负起守卫家园的重任。", category:"世界成就"},
+  {id:"巨人克星", desc:"击退入侵的巨人大军，被尊为「巨人克星」。", category:"世界成就"},
+  {id:"路见不平", desc:"路遇打劫时挺身而出，击退了劫匪。", category:"世界成就"},
+  {id:"有情人终成眷属", desc:"鼓起勇气向一见倾心的人坦白了心意。", category:"世界成就"},
+  {id:"相逢一笑泯恩仇", desc:"与纠缠半生的宿敌最终握手言和。", category:"世界成就"},
+  {id:"倾囊相授", desc:"把毕生所学一点不留地传授给了后辈。", category:"世界成就"},
+  {id:"师恩难忘", desc:"为当年提点自己的恩师写下了纪念之书。", category:"世界成就"},
+  {id:"另起炉灶", desc:"查明显赫身世后，选择谁也不依附，自立门户。", category:"世界成就"},
+  {id:"老当益壮", desc:"年事已高仍宝刀未老，与徒弟一同再战一场。", category:"世界成就"},
+  {id:"青出于蓝", desc:"婉拒了徒弟的邀约，把舞台留给了年轻人。", category:"世界成就"},
+  {id:"未雨绸缪", desc:"在灾难征兆再现时挺身示警，救下了所有人。", category:"世界成就"},
+  {id:"一诺千金", desc:"倾力偿还了一份多年前欠下的人情。", category:"世界成就"},
+  {id:"临危受命", desc:"欣然接受了成为一方领袖的重担。", category:"世界成就"},
+  // 隐藏成就：未解锁前只显示模糊的提示，解锁后才会显现真实的名称与描述
+  {id:"天选暴发户", desc:"三个天赋清一色全是传说级，运气好得不像话。", category:"隐藏成就", hidden:true,
+   teaser:"似乎和这一局的天赋运气好得过分有关……"},
+  {id:"开局地狱难度", desc:"三个天赋清一色全是缺陷级，这局是来渡劫的吧。", category:"隐藏成就", hidden:true,
+   teaser:"似乎和这一局的天赋运气差得离谱有关……"},
+  {id:"Flag应验", desc:"抽到了「死亡Flag体质」，而这一次，flag真的立住了。", category:"隐藏成就", hidden:true,
+   teaser:"关于某个不太吉利的天赋，以及它最终有没有应验……"},
+  {id:"这个反派人不错", desc:"抽到了「反派体质」，却依然被误会到底、圆圆满满地活完了一生。", category:"隐藏成就", hidden:true,
+   teaser:"或许和一个总被人误解的天赋有关……"},
+  {id:"逆天改命", desc:"以「底层弃儿」的投胎方式开局，却硬生生触发了隐藏结局。", category:"隐藏成就", hidden:true,
+   teaser:"似乎跟你选择的投胎方式，以及这局最终有多传奇有关……"},
+  {id:"手动挡玩家", desc:"从头到尾坚持手动点「下一年」，一次自动播放都没用过。", category:"隐藏成就", hidden:true,
+   teaser:"似乎与你的游玩方式有关……"},
+  {id:"灵魂本源共鸣", desc:"同时拥有「双生灵魂」与「神谕先知」两种天赋，仿佛冥冥中早有联系。", category:"隐藏成就", hidden:true,
+   teaser:"或许和某两个天赋之间微妙的联系有关……"},
+  {id:"虽败犹荣", desc:"命运积分不到30分，却依然在这一局里收获了至少一项人生成就。", category:"隐藏成就", hidden:true,
+   teaser:"就算过得不算风光，好像也不是一无所获……"}
+];
+
+/* 世界观专属事件：每个世界观在每个人生阶段各有一条特色事件，穿插进对应阶段的事件池 */
+const WORLD_EVENTS = {
+  qixiu: {
+    infant:[
+      {text:"你出生时，家中老槐树无风自动，村里游方的道士掐指一算，直呼「此子骨骼惊奇，乃是难得一见的修仙苗子」。", weight:10},
+      {text:"你满月那天，家中水缸里的水无风自动泛起层层涟漪，坊间都说这是灵气感应的祥瑞之兆。", weight:9},
+      {text:"你三岁时误食了后山的一颗奇异野果，浑身经脉隐隐发烫了三天三夜，之后却神清气爽，仿佛脱胎换骨。", weight:8},
+      {text:"你尚在牙牙学语时，就能准确指出附近山头灵气浓郁的方位，把在场的行脚修士都惊呆了。", weight:7, cond:c=>stat(c,"wit")>=7}
+    ],
+    youth:[
+      {text:"你被附近的宗门选入山门，成为一名记名弟子，从此开始了枯燥却机遇不断的修炼生涯。", weight:10},
+      {text:"你在藏经阁打杂扫尘时，无意间偷学了一本残缺不全的吐纳法诀，功力自此突飞猛进。", weight:9},
+      {text:"你在同辈弟子的比武大会上一路过关斩将，被素来严苛的长老破格收为亲传弟子。", weight:8, cond:c=>stat(c,"power")>=7},
+      {text:"你天资愚钝，苦练三年才勉强凝聚起一丝真气，没少被同门师兄弟明里暗里地嘲笑。", weight:8, cond:c=>stat(c,"wit")<=3}
+    ],
+    adult:[
+      {text:"你历经三次雷劫依然屹立不倒，成功筑基，正式踏入了修仙者的行列。", weight:10, achievement:"筑基成功"},
+      {text:"你在一次宗门秘境的历练中力压群雄夺得头筹，声名很快传遍了附近几个宗门。", weight:8, cond:c=>stat(c,"power")>=7},
+      {text:"一位神秘老祖只用寥寥数语便点醒了你的修炼瓶颈，你隐隐觉得冥冥中自有天意眷顾。", weight:6, cond:c=>hasTag(c,"chosen")},
+      {death:true, text:"你在冲击金丹的关键时刻不慎走火入魔，经脉尽断，含恨陨落于自己的闭关洞府之中。", weight:1, cause:"走火入魔"}
+    ],
+    prime:[
+      {text:"你在一次门派秘境探索中夺得一件上古法器，实力再进一步，跻身金丹修士之列。", weight:10, achievement:"金丹大成"},
+      {text:"你执掌门中长老之位，门下弟子云集，俨然成了这方修仙盛派的中流砥柱。", weight:8, cond:c=>stat(c,"origin")>=7},
+      {text:"你游历三千大千世界，在一场量劫之中助本命宗门渡过了灭顶之灾，声望一时无两。", weight:7}
+    ],
+    elder:[
+      {text:"你于山巅盘膝而坐，感悟天地大道，肉身与灵魂在漫天雷劫中一同蜕变、升华。", weight:10},
+      {text:"你将毕生功法尽数传于座下弟子，随后飘然远游，从此再未在这方世界现身。", weight:8},
+      {text:"你以肉身之躯硬撼天道法则，最终突破至虚无缥缈、寻常修士穷尽一生都难以企及的大乘之境。", weight:6}
+    ]
+  },
+  magic: {
+    infant:[
+      {text:"你出生的那个夜晚，家门口的魔法水晶突然大放异彩，附近的魔法学院很快就派人前来登记造册。", weight:10},
+      {text:"接生的产婆惊讶地发现，你出生时周身萦绕着淡淡的元素波动，像是与生俱来的魔力共鸣。", weight:9},
+      {text:"一位路过村庄的精灵旅人特意在你的摇篮边留下了一枚小巧的祝福徽章，随后悄然离去。", weight:7, cond:c=>stat(c,"charm")>=7}
+    ],
+    youth:[
+      {text:"你收到了梦寐以求的魔法学院录取通知书，怀揣忐忑与期待踏上了前往学院的马车。", weight:10},
+      {text:"你在入学考试中独自破解了一道困扰教授们多年的古代符文谜题，一时间名声大噪。", weight:8, cond:c=>stat(c,"wit")>=7},
+      {text:"你在图书馆的角落里结识了一位沉默寡言的同学，两人一见如故，很快成了形影不离的搭档。", weight:8}
+    ],
+    adult:[
+      {text:"你在毕业典礼上正式获得了「持证魔法师」的资格认证，胸前别上了属于自己的法师徽章。", weight:10, achievement:"持证魔法师"},
+      {text:"你只身一人平定了边境城镇的一场魔物暴乱，从此被当地居民亲切地称为「守护者」。", weight:8, cond:c=>stat(c,"power")>=7},
+      {death:true, text:"一次禁咒实验意外失控，法力反噬彻底撕裂了你的魂魄，再无生还的可能。", weight:1, cause:"禁咒反噬"}
+    ],
+    prime:[
+      {text:"你受王国委托前往边境平息了一场精灵与人类之间的冲突，声望在大陆上迅速传开。", weight:10, achievement:"边境和事佬"},
+      {text:"王室正式册封你为宫廷魔导师，从此你的名字被郑重地载入了王国的编年史册。", weight:8, cond:c=>hasTag(c,"royalmagic")},
+      {text:"你受邀主持了一届魔法学院的毕业典礼，看着台下满怀憧憬的新人，恍惚看到了当年懵懂的自己。", weight:7}
+    ],
+    elder:[
+      {text:"你将自己毕生钻研的魔法奥秘编纂成书，郑重地存放进了魔法学院的禁书阁，供后人瞻仰。", weight:10},
+      {text:"你在魔法塔顶层设立了一处静谧的观星台，晚年常在此地推演星辰运转与魔法本源之间的关联。", weight:8}
+    ]
+  },
+  scifi: {
+    infant:[
+      {text:"你在人工子宫舱中降生，出生记录在第一时间就被同步进了殖民地的中央数据库。", weight:10},
+      {text:"你出生时的生命体征数据被自动上传，殖民地的中央AI罕见地给你的基因序列打出了极高的评级。", weight:9, cond:c=>stat(c,"wit")>=7},
+      {text:"医疔舱的扫描仪在你出生的瞬间突然报错重启，工程师们排查了整整三天也没找到原因。", weight:7}
+    ],
+    youth:[
+      {text:"你在基础学院的模拟战考核中，操控教学机甲一举拿到了全年级第一。", weight:10, achievement:"模拟战冠军"},
+      {text:"你在格斗训练营里连续击败了所有高年级学员，教官破格让你提前参加了实战考核。", weight:8, cond:c=>stat(c,"power")>=7},
+      {text:"你偷偷改装了教学机甲的核心程序，虽然当场被抓了个正着，却也因此被科研部门的人暗中看中。", weight:7}
+    ],
+    adult:[
+      {text:"你正式获得殖民地颁发的机甲驾驶执照，驾驶着属于自己的第一台量产型机甲奔赴前线。", weight:10, achievement:"机甲驾驶员"},
+      {text:"你破解了一段来自深空的神秘信号，为整个殖民地争取到了极其宝贵的预警时间。", weight:8, cond:c=>stat(c,"wit")>=7},
+      {death:true, text:"一场护航任务中，你的座机在跃迁通道里彻底失联，殖民地的记录里只留下了一段静默的信号。", weight:1, cause:"跃迁失踪"}
+    ],
+    prime:[
+      {text:"你主导了一次跨星系的殖民地救援行动，成功阻止了一场即将爆发的资源战争。", weight:10, achievement:"星际救援英雄"},
+      {text:"你的基因样本被列为殖民地的保护资产，无数科研机构都争相想要研究你身上的秘密。", weight:8, cond:c=>hasTag(c,"genemod")},
+      {text:"你主持设计了新一代殖民舰的核心引擎，让人类探索的脚步得以踏向更加遥远的星域。", weight:7}
+    ],
+    elder:[
+      {text:"你的意识在临终前被完整上传进了星际网络，从此以数据的形式在星海之间永远存在。", weight:10},
+      {text:"你在退役仪式上把毕生的航行日志上传进了公共数据库，供后来的星际旅人查阅参考。", weight:8}
+    ]
+  },
+  warhammer: {
+    infant:[
+      {text:"教士在你出生时进行了照例的信仰筛查，你体内异常的力量波动让在场所有人都倒吸了一口凉气。", weight:10},
+      {text:"教团的裁决官在你的出生记录上郑重盖下了罕见的「特别关注」印章，随即匆匆离去。", weight:8},
+      {text:"村中的老兵看到你的第一眼，就默默放下了手中的酒杯，低声说了句「愿帝皇庇佑这孩子」。", weight:7}
+    ],
+    youth:[
+      {text:"帝国的征募官找上了门来，你告别故乡，登上了驶向前线的运兵船，从此再未回头。", weight:10},
+      {text:"你在新兵训练营的实弹演习中打出了全营最高的战绩，教官当场记下了你的名字。", weight:8, cond:c=>stat(c,"power")>=7},
+      {text:"你亲眼目睹了人生中第一场与异形的遭遇战，从那天起，你彻底明白了「战争永无止境」的含义。", weight:7}
+    ],
+    adult:[
+      {text:"你在与异形大军的殊死搏斗中活了下来，被亲手授予了象征荣耀的帝国勋章。", weight:10, achievement:"帝国勋章"},
+      {text:"你在濒死之际隐约听到了帝皇清晰的低语，浑身伤势竟奇迹般地开始迅速愈合。", weight:8, cond:c=>hasTag(c,"emperorwhisper")},
+      {death:true, text:"混沌的低语最终侵蚀了你的意志，你倒在了自己曾经誓死守卫的战线之内。", weight:1, cause:"意志沦陷"}
+    ],
+    prime:[
+      {text:"你率领一支残破不堪的军团死守住了一座至关重要的星门要塞，为帝国争取了宝贵的喘息之机。", weight:10, achievement:"星门守卫者"},
+      {text:"你被正式擢升为军团指挥官，麾下的战士们都尊称你为「不朽的钢铁意志」。", weight:8, cond:c=>stat(c,"origin")>=7},
+      {text:"你带领残部走出了被称为「死亡禁区」的坠毁战舰残骸，从此成了军团中人尽皆知的传奇。", weight:7}
+    ],
+    elder:[
+      {text:"在生命的最后一刻，你的躯体被虔诚地封入无畏机甲的圣龛之中，继续为帝皇而战，直至永远。", weight:10},
+      {text:"你在临终前只留下一句遗言：「即使身死，帝国的战旗也绝不会倒下」，随后被追授了殉道者之名。", weight:8}
+    ]
+  },
+  yaoguai: {
+    infant:[
+      {text:"接生婆掀开襁褓的一角，隐约瞥见你眉心有一道若隐若现的淡淡印记，吓得连声念起了避邪的咒语。", weight:10},
+      {text:"你出生那晚，院子里的野猫围着摇篮转了整整三圈，随后齐齐冲着夜空长嚎了一声。", weight:8},
+      {text:"算命先生翻遍了手中的黄历，也没算出你的生辰八字究竟对应哪一卦象，摇着头匆匆离去。", weight:7}
+    ],
+    youth:[
+      {text:"你被城隍庙里的老道长收为徒弟，开始学习驱邪捉妖、画符念咒的本领。", weight:10},
+      {text:"镇上的一只小狐妖时常变成人形来找你玩耍，村民们都当你俩是青梅竹马的玩伴，浑然不知真相。", weight:8, cond:c=>stat(c,"charm")>=7},
+      {text:"你误打误撞闯入了后山的一处古墓，侥幸捡回一条命，却也因此染上了些不同寻常的体质。", weight:7}
+    ],
+    adult:[
+      {text:"你在一场夜半的妖乱中初次降服了一只作祟多年的山精，从此在坊间也算小有名气。", weight:10, achievement:"降妖有成"},
+      {text:"你与一位倾城的狐族少女萍水相逢，她笑着说这是「几世修来的缘分」，从此常伴你左右。", weight:8, cond:c=>hasTag(c,"foxblood")},
+      {death:true, text:"一场镇压百年凶灵的法事中，你耗尽了周身法力，与凶灵同归于尽，魂飞魄散。", weight:1, cause:"以身镇灵"}
+    ],
+    prime:[
+      {text:"你游历大江南北，与形形色色的妖怪化敌为友，甚至结拜了一位性情爽朗的狐仙义妹。", weight:10, achievement:"人妖之交"},
+      {text:"你在江湖上开了一间不起眼的小道观，专为往来的百姓答疑解惑、驱邪辟灾。", weight:8},
+      {text:"你被朝廷请去镇守一方水患多发的辖地，此后那片水域再也没有闹过妖乱。", weight:7}
+    ],
+    elder:[
+      {text:"你于风清月朗之夜悄然羽化，坊间都传说你最终修成了半仙之体，隐入了深山之中。", weight:10},
+      {text:"你临终前将一身道法尽数传给了闻讯赶来的徒弟，笑着说「这江湖，往后就交给你们了」。", weight:8}
+    ]
+  },
+  cyberpunk: {
+    infant:[
+      {text:"你出生在废土边缘的地下避难所里，出生证明是用一块从旧世界废墟里捡来的芯片刻录的。", weight:10},
+      {text:"你出生那天，避难所的老式广播突然自动播放了一段来自旧世界的儿歌，随后又戛然而止。", weight:8},
+      {text:"医疗官检查你的血样时，发现里面残留着微量的旧时代辐射抗体，直呼这简直是个奇迹。", weight:7}
+    ],
+    youth:[
+      {text:"你在黑市换来了人生中第一件义体改造——一只机械手臂，从此在废土上多了几分活下去的底气。", weight:10},
+      {text:"你在废土帮派的地下拳赛里连续获胜，靠着赢来的奖金给自己添置了第二件义体。", weight:8, cond:c=>stat(c,"power")>=7},
+      {text:"你在垃圾场里意外挖出了一台还能运转的旧世界终端，从里面读到了不少早已失传的禁忌知识。", weight:7}
+    ],
+    adult:[
+      {text:"你加入了废土上小有名气的拾荒者公会，凭借过硬的本领很快就在圈子里闯出了名号。", weight:10, achievement:"废土拾荒者"},
+      {text:"你的义体在一次交火中严重受损，黑市医生检查后却说这具身体的适配度「简直是为战斗而生」。", weight:8, cond:c=>hasTag(c,"cyberlimb")},
+      {death:true, text:"一次深入辐射区的探索行动中，你的义体系统突然过载烧毁，倒在了漫天黄沙之中。", weight:1, cause:"义体过载"}
+    ],
+    prime:[
+      {text:"你带队攻入了旧世界遗留的地下军事基地，缴获了一批足以改变势力格局的战前科技。", weight:10, achievement:"深渊拾荒王"},
+      {text:"你在废土上建立起了一支颇具规模的商队，穿梭在各个据点之间贩卖情报与紧俏补给。", weight:8},
+      {text:"你击退了觊觎你地盘的另一个帮派，从此在这片废土上再没人敢轻举妄动。", weight:7}
+    ],
+    elder:[
+      {text:"你在废土上建立起了一座能够自给自足的绿洲聚居地，成了后来者口口相传的传奇拓荒人。", weight:10},
+      {text:"你把毕生搜集的旧世界残卷整理成册，交给聚居地的孩子们，作为重建文明的一颗种子。", weight:8}
+    ]
+  },
+  steampunk: {
+    infant:[
+      {text:"你出生时，家里那台老旧的自动摇篮机突然自己发动了起来，摇晃的节奏精准得不像是故障。", weight:10},
+      {text:"接生的护士注意到你手心里天生带着一圈细密的齿轮状纹路，啧啧称奇。", weight:8}
+    ],
+    youth:[
+      {text:"你被镇上的机械工会看中，破格收为学徒，开始学习拆装各种精密仪器。", weight:10},
+      {text:"你在一次课堂展示中，把老师布置的简单发条装置改装成了会跳舞的机械玩偶。", weight:8}
+    ],
+    adult:[
+      {text:"你正式取得了工程师协会颁发的「持证机师」资格证，开始独立承接各类机械委托。", weight:10, achievement:"持证机师"},
+      {text:"议会的一位大臣似乎对你的机械造诣格外忌惮，暗中派人打探你的底细。", weight:8},
+      {death:true, text:"一次锅炉过载实验中，你来不及疏散便被爆炸的蒸汽洪流吞没。", weight:1, cause:"锅炉过载"}
+    ],
+    prime:[
+      {text:"你设计的一台全新型号飞艇引擎震惊了整个工程师协会，订单如雪片般飞来。", weight:10, achievement:"飞艇引擎大师"},
+      {text:"你受邀加入了城市议会的技术顾问团，参与制定新一代基础设施的建造标准。", weight:8}
+    ],
+    elder:[
+      {text:"你把毕生的设计图纸整理成册，捐赠给了工程师协会的档案馆，供后人学习钻研。", weight:10},
+      {text:"你在自家工坊里安享晚年，时常有慕名而来的年轻学徒登门求教。", weight:8}
+    ]
+  },
+  zombie: {
+    infant:[
+      {text:"你出生的那一刻，避难所的丧尸警报恰好解除，大人们都说这是个好兆头。", weight:10},
+      {text:"你从小就对丧尸的低吼声毫不畏惧，反倒盯着铁栅栏外的丧尸看得津津有味。", weight:8}
+    ],
+    youth:[
+      {text:"你被幸存者营地选中，加入了少年侦察队，学习如何在废墟中安静地行动。", weight:10},
+      {text:"你在一次物资搜寻任务中，独自应对了一只丧尸的偷袭，全须全尾地回到了营地。", weight:8}
+    ],
+    adult:[
+      {text:"你正式成为营地的核心战斗员，肩负起了每一次外出搜寻任务的安全重任。", weight:10, achievement:"核心战斗员"},
+      {text:"营地里流传着一种未知变异丧尸的消息，所有人都隐隐觉得这与你有关。", weight:8},
+      {death:true, text:"一次外出搜寻物资时，你被数量庞大的丧尸群团团围住，寡不敌众。", weight:1, cause:"力竭殒命"}
+    ],
+    prime:[
+      {text:"你带队清剿了盘踞在城郊多年的丧尸巢穴，为营地扩张争取到了宝贵的空间。", weight:10, achievement:"巢穴清剿者"},
+      {text:"你建立起了一套完整的哨戒体系，让营地的夜晚第一次有了真正意义上的安宁。", weight:8}
+    ],
+    elder:[
+      {text:"你把这些年摸索出的求生经验编写成册，成为新一代幸存者人手一份的生存手册。", weight:10},
+      {text:"你在自己一手建起的安全区里安享晚年，看着当年的废墟渐渐重新长出了绿意。", weight:8}
+    ]
+  },
+  westworld: {
+    infant:[
+      {text:"你出生时，镇上酒馆正好响起一阵枪战，接生的大夫是在桌子底下把你接生下来的。", weight:10},
+      {text:"你满月那天，一群路过的商队特意停下来，送了你一顶小小的牛仔帽作为礼物。", weight:8}
+    ],
+    youth:[
+      {text:"你在镇上的靶场里第一次摸到手枪，教官说你的手感好得不像个新手。", weight:10},
+      {text:"你在一次镇上的骚乱中，冷静地帮着大人疏散了受惊的孩子，被镇长记在了心里。", weight:8}
+    ],
+    adult:[
+      {text:"你正式领到了赏金猎人执照，开始在这片荒芜的大陆上追捕悬赏名单上的通缉犯。", weight:10, achievement:"赏金猎人"},
+      {text:"铁路公司的一位工头似乎对你颇为忌惮，暗中雇了人想要找你的麻烦。", weight:8},
+      {death:true, text:"一场势均力敌的对决中，你慢了对方半拍，倒在了尘土飞扬的决斗场上。", weight:1, cause:"决斗落败"}
+    ],
+    prime:[
+      {text:"你在一场惊心动魄的决斗中击败了赏金榜上排名第一的悬赏犯，声名传遍了整片大陆。", weight:10, achievement:"决斗之王"},
+      {text:"你出资帮小镇修建了第一条像样的水渠，镇民们都说你是这片土地上的活菩萨。", weight:8}
+    ],
+    elder:[
+      {text:"你把自己多年闯荡积累的经验写成了一本小册子，成了后辈赏金猎人争相传抄的教材。", weight:10},
+      {text:"你在自家牧场的摇椅上悠闲地晒着太阳，偶尔给孙辈讲讲当年的枪战故事。", weight:8}
+    ]
+  },
+  urbanpower: {
+    infant:[
+      {text:"你出生时，医院里所有的灯光同时闪烁了一下，值班医生都觉得莫名其妙。", weight:10},
+      {text:"你还在襁褓中时，就总能准确地转头看向房间里没人注意到的角落，仿佛能察觉到什么。", weight:8}
+    ],
+    youth:[
+      {text:"你在一次体育课上意外展现出远超常人的反应速度，被班主任悄悄记录了下来。", weight:10},
+      {text:"你结识了班上一个同样有些「奇怪」的同学，两人一拍即合，成了无话不谈的朋友。", weight:8}
+    ],
+    adult:[
+      {text:"你正式加入了一个地下的异能者互助组织，第一次见到了和自己一样的「异类」。", weight:10, achievement:"觉醒者同盟"},
+      {text:"某个神秘组织的人似乎盯上了你的能力，开始暗中调查你的行踪。", weight:8},
+      {death:true, text:"一次力量失控的对抗中，你耗尽了全部本源力量，再也没能站起来。", weight:1, cause:"本源枯竭"}
+    ],
+    prime:[
+      {text:"你在一次城市危机中挺身而出，力挽狂澜，事后却选择隐姓埋名，不愿暴露身份。", weight:10, achievement:"无名英雄"},
+      {text:"你建立起了一个专门帮助新觉醒者适应能力的互助中心，成了这个圈子里德高望重的前辈。", weight:8}
+    ],
+    elder:[
+      {text:"你把自己多年来对异能的研究心得整理成册，秘密传给了值得信赖的下一代。", weight:10},
+      {text:"你隐居在城市边缘的一处小屋里，偶尔还是会有慕名而来的年轻觉醒者登门请教。", weight:8}
+    ]
+  },
+  pirates: {
+    infant:[
+      {text:"你出生的那一夜，港口上空罕见地出现了一道彩虹状的极光，老水手们都说这是吉兆。", weight:10},
+      {text:"你还是婴儿时就格外喜欢海浪的声音，只要一抱到甲板上就会立刻停止哭闹。", weight:8}
+    ],
+    youth:[
+      {text:"你偷偷溜上了一艘即将启航的商船，靠着机灵劲儿被船长留下来当了见习水手。", weight:10},
+      {text:"你在一次风暴中协助船员们抢险，虽然吓得腿软，却也因此赢得了水手们的认可。", weight:8}
+    ],
+    adult:[
+      {text:"你正式成为了一名独当一面的航海士，在船队里逐渐站稳了脚跟。", weight:10, achievement:"独当一面的航海士"},
+      {text:"海上流传着一支神秘海盗团正在四处寻找传说中宝藏地图的消息，你隐隐觉得与自己有关。", weight:8},
+      {death:true, text:"一场突如其来的风暴击碎了你的船，你和整支船队一同沉入了深海。", weight:1, cause:"葬身深海"}
+    ],
+    prime:[
+      {text:"你率领船队找到了传说中的宝藏岛，一夜之间成了整片海域最富有的船长。", weight:10, achievement:"寻宝船长"},
+      {text:"你在海上建立起了自己的势力范围，各路商船都愿意花钱请你的船队护航。", weight:8}
+    ],
+    elder:[
+      {text:"你把自己一生的航海日志整理成册，留给了后来的年轻水手当作航海指南。", weight:10},
+      {text:"你在自己名下的一座海岛上安度晚年，偶尔还会望着大海，想起当年扬帆远航的日子。", weight:8}
+    ]
+  },
+  norse: {
+    infant:[
+      {text:"你出生的那一夜，天空中的极光格外绚烂，村里的贤者说这是诸神在关注你。", weight:10},
+      {text:"你尚在襁褓中时，家里饲养的渡鸦就总喜欢落在你的摇篮边，一动不动地盯着你看。", weight:8}
+    ],
+    youth:[
+      {text:"你被村中的战士长选中，开始学习使用战斧与长盾，稚嫩的手臂却渐渐有了力量。", weight:10},
+      {text:"你在一次成年礼的试炼中表现优异，被族中长老称赞「颇有先祖遗风」。", weight:8}
+    ],
+    adult:[
+      {text:"你正式成为了村落的战士，肩负起了守卫家园、抵御巨人袭扰的重任。", weight:10, achievement:"村落战士"},
+      {text:"一位神秘的旅行者似乎对你格外关注，据说他见过世界树的根须。", weight:8},
+      {death:true, text:"一场惨烈的战役中，你力战数名巨人后气力耗尽，倒在了冰封的战场上。", weight:1, cause:"战死沙场"}
+    ],
+    prime:[
+      {text:"你在一场惨烈的战役中击退了入侵的巨人大军，被各部落尊为「巨人克星」。", weight:10, achievement:"巨人克星"},
+      {text:"你被推举为部落联盟的战争统帅，肩负起了守护整片北境的重任。", weight:8}
+    ],
+    elder:[
+      {text:"你把自己一生的战斗经验编成了萨迦英雄叙事诗，由吟游诗人传唱至今。", weight:10},
+      {text:"你在壁炉旁安享晚年，孙辈们围坐在你身边，缠着你讲述当年与巨人搏斗的往事。", weight:8}
+    ]
+  }
+};
+
+/* ========================= 工具函数 ========================= */
+function rnd(n){ return Math.floor(Math.random()*n); }
+function pick(arr){ return arr[rnd(arr.length)]; }
+function weightedPick(list){
+  const total = list.reduce((s,x)=>s+x.weight,0);
+  let r = Math.random()*total;
+  for(const item of list){ r -= item.weight; if(r<=0) return item; }
+  return list[list.length-1];
+}
+function applyStatEffect(effect){
+  Object.keys(effect).forEach(k=>{
+    state.stats[k] = Math.max(1, Math.min(10, state.stats[k] + effect[k]));
+  });
+}
+function weightedTalentDraw(pool, count){
+  const bag=[];
+  pool.forEach(t=>{ for(let i=0;i<RARITY_WEIGHT[t.rarity];i++) bag.push(t); });
+  const chosen=[]; const usedIds=new Set();
+  while(chosen.length<count && usedIds.size<pool.length){
+    const t = pick(bag);
+    if(!usedIds.has(t.id)){ usedIds.add(t.id); chosen.push(t); }
+  }
+  return chosen;
+}
+function costOf(level){ return level*(level+1)/2; }
+function escapeModText(mod){
+  return Object.keys(mod).map(k=>{
+    const v = mod[k];
+    return `<span class="mod-tag ${v>0?'pos':'neg'}">${STAT_LABEL[k]}${v>0?'+':''}${v}</span>`;
+  }).join("");
+}
+
+/* ========================= 状态 ========================= */
+const state = {
+  screen:"intro",
+  worldview:null,
+  worldviewOptions:[],
+  reincarnation:null,
+  reincarnationOptions:[],
+  talentRounds:[],   // 3 rounds, each: {options:[t,t,t], chosen:null}
+  currentRound:0,
+  chosenTalents:[],
+  stats:{power:1,wit:1,charm:1,luck:1,origin:1,health:5,wealth:5},
+  budgetTotal:26,
+  log:[],
+  age:0,
+  alive:true,
+  achievements:[],
+  causeOfEnd:null,
+  speed:"normal", // slow/normal/fast
+  autoPlay:false,
+  autoPlayUsedThisLife:false,
+  simTimer:null,
+  finished:false,
+  isHiddenEnding:false,
+  unlockedAchievements:new Set(),   // 跨局持久化：已解锁的成就id集合
+  playStats:{totalLives:0, worldsPlayed:[], hiddenEndingsUnlocked:[]}, // 跨局持久化：统计数据
+  newlyUnlockedThisLife:[],          // 本局新解锁的成就，结局页高亮展示用
+  flags:null,                        // 本局事件连锁标记集合(Set)，运行时初始化
+  pendingChoice:null,                // 当前等待玩家做出选择的分支事件
+  achievementsFrom:"intro"           // 记录从哪个界面进入成就殿堂，方便返回
+};
+
+/* ========================= 成就系统：持久化存储 ========================= */
+const HAS_STORAGE = typeof window !== "undefined" && !!window.storage;
+
+async function loadPersistedData(){
+  if(!HAS_STORAGE) return;
+  try{
+    const res = await window.storage.get("unlocked_achievements", false);
+    if(res && res.value) state.unlockedAchievements = new Set(JSON.parse(res.value));
+  }catch(e){ /* 尚未有存档，保持空集合 */ }
+  try{
+    const res2 = await window.storage.get("play_stats", false);
+    if(res2 && res2.value) state.playStats = Object.assign(
+      {totalLives:0, worldsPlayed:[], hiddenEndingsUnlocked:[]},
+      JSON.parse(res2.value)
+    );
+  }catch(e){ /* 尚未有存档，保持默认值 */ }
+}
+
+async function savePersistedAchievements(){
+  if(!HAS_STORAGE) return;
+  try{ await window.storage.set("unlocked_achievements", JSON.stringify([...state.unlockedAchievements]), false); }
+  catch(e){ /* 存储失败时静默忽略，不影响游戏本身进行 */ }
+}
+async function savePersistedStats(){
+  if(!HAS_STORAGE) return;
+  try{ await window.storage.set("play_stats", JSON.stringify(state.playStats), false); }
+  catch(e){ /* 存储失败时静默忽略 */ }
+}
+
+/* 解锁一个成就：id 必须与 ACHIEVEMENT_CATALOG 中的 id 完全一致。
+   已解锁过的成就不会重复计入「本局新解锁」列表。 */
+function unlockAchievement(id){
+  if(state.unlockedAchievements.has(id)) return;
+  state.unlockedAchievements.add(id);
+  state.newlyUnlockedThisLife.push(id);
+  savePersistedAchievements();
+}
+
+/* 结算一局人生结束时的跨局统计与「元成就」判定 */
+function checkMetaAchievements(){
+  state.playStats.totalLives = (state.playStats.totalLives||0) + 1;
+  if(state.playStats.totalLives===1) unlockAchievement("初次转生");
+  if(state.playStats.totalLives>=10) unlockAchievement("屡败屡战");
+
+  if(!state.playStats.worldsPlayed.includes(state.worldview.id)){
+    state.playStats.worldsPlayed.push(state.worldview.id);
+  }
+  if(state.playStats.worldsPlayed.length>=WORLDVIEWS.length) unlockAchievement("阅遍诸界");
+
+  if(state.isHiddenEnding){
+    unlockAchievement("天命之子");
+    if(!state.playStats.hiddenEndingsUnlocked.includes(state.worldview.id)){
+      state.playStats.hiddenEndingsUnlocked.push(state.worldview.id);
+    }
+    if(state.playStats.hiddenEndingsUnlocked.length>=WORLDVIEWS.length) unlockAchievement("命运收藏家");
+  }
+
+  if(state.age>=90) unlockAchievement("长命百岁");
+  if(!state.alive && state.age<20) unlockAchievement("英年早逝");
+  if(STAT_KEYS.every(k=>state.stats[k]>=10)) unlockAchievement("满级传说");
+
+  // 隐藏成就判定
+  const talentTags = new Set();
+  state.chosenTalents.forEach(t=> t.tags.forEach(tag=>talentTags.add(tag)));
+  const talentIds = state.chosenTalents.map(t=>t.id);
+
+  if(state.chosenTalents.length===3 && state.chosenTalents.every(t=>t.rarity==="legendary")){
+    unlockAchievement("天选暴发户");
+  }
+  if(state.chosenTalents.length===3 && state.chosenTalents.every(t=>t.rarity==="flaw")){
+    unlockAchievement("开局地狱难度");
+  }
+  if(talentTags.has("deathflag") && !state.alive){
+    unlockAchievement("Flag应验");
+  }
+  if(talentTags.has("villain") && state.alive){
+    unlockAchievement("这个反派人不错");
+  }
+  if(state.reincarnation.id.endsWith("_outcast") && state.isHiddenEnding){
+    unlockAchievement("逆天改命");
+  }
+  if(!state.autoPlayUsedThisLife){
+    unlockAchievement("手动挡玩家");
+  }
+  if(talentIds.includes("twinsoul") && talentIds.includes("prophet")){
+    unlockAchievement("灵魂本源共鸣");
+  }
+  if(computeScore()<30 && state.achievements.length>=1){
+    unlockAchievement("虽败犹荣");
+  }
+
+  savePersistedStats();
+}
+
+function baseBudgetUsed(){
+  return STAT_KEYS.reduce((s,k)=>s+costOf(state.stats[k]),0);
+}
+function remainingBudget(){
+  // 天赋与投胎方式带来的属性加成不占用玩家可分配的点数：
+  // 可用总额 = 手动分配点数(budgetTotal) + 天赋加成本身消耗的"点数"(floorCost)
+  return state.budgetTotal + (state.floorCost||0) - baseBudgetUsed();
+}
+
+/* ========================= 渲染 ========================= */
+const app = document.getElementById("app");
+
+function render(){
+  let html = `<div class="rune-divider">ISEKAI · REBIRTH CHRONICLE</div>
+  <h1 class="title">异世界重开模拟器</h1>
+  <p class="subtitle">choose your fate · 每一次重开，都是全新的异世界人生</p>`;
+
+  if(state.screen==="intro") html += renderIntro();
+  else if(state.screen==="worldview") html += renderWorldview();
+  else if(state.screen==="reincarnation") html += renderReincarnation();
+  else if(state.screen==="talent") html += renderTalent();
+  else if(state.screen==="stats") html += renderStats();
+  else if(state.screen==="sim") html += renderSim();
+  else if(state.screen==="ending") html += renderEnding();
+  else if(state.screen==="achievements") html += renderAchievements();
+
+  html += `<div class="footer-note">灵感致敬《人生重开模拟器》 · 异世界主题重构版</div>`;
+  app.innerHTML = html;
+  bindEvents();
+}
+
+function renderIntro(){
+  const unlockedCount = state.unlockedAchievements.size;
+  const totalCount = ACHIEVEMENT_CATALOG.length;
+  return `
+  <div class="scroll">
+    <div class="section-label">序章 <span class="idx">PROLOGUE</span></div>
+    <p>你在毫无预兆的情况下失去了对原来世界的记忆，再次睁眼时，眼前是一片陌生却又充满魔力波动的天空。</p>
+    <p>你将经历世界观的抽取、投胎方式的选择、命运天赋的抽取、初始属性的分配，然后见证一段完整的异世界人生——从呱呱坠地，到落幕归尘。</p>
+    <div class="btn-row center">
+      <button class="btn primary" id="btn-start">开始转生</button>
+      <button class="btn" id="btn-view-achievements">🏆 成就殿堂 （${unlockedCount} / ${totalCount}）</button>
+    </div>
+  </div>`;
+}
+
+function renderWorldview(){
+  const cards = state.worldviewOptions.map(w=>{
+    const sel = state.worldview && state.worldview.id===w.id ? "selected":"";
+    return `<div class="pick-card ${sel}" data-worldview="${w.id}">
+      <h3>${w.name}</h3>
+      <p>${w.desc}</p>
+      <div class="tag-row"><span class="mod-tag">${w.tagline}</span></div>
+    </div>`;
+  }).join("");
+  return `
+  <div class="scroll">
+    <div class="section-label">第一步 · 转生世界观 <span class="idx">01</span></div>
+    <p>命运之骰第一次投出了三种可能的世界，选择你即将踏入的舞台。</p>
+    <div class="card-grid">${cards}</div>
+    <div class="btn-row">
+      <button class="btn primary" id="btn-to-reincarnation" ${state.worldview?"":"disabled"}>确认世界观</button>
+    </div>
+  </div>`;
+}
+
+function renderReincarnation(){
+  const options = state.reincarnationOptions;
+  const cards = options.map(r=>{
+    const sel = state.reincarnation && state.reincarnation.id===r.id ? "selected":"";
+    return `<div class="pick-card ${sel}" data-reincarnation="${r.id}">
+      <h3>${r.name}</h3>
+      <p>${r.desc}</p>
+      <div class="tag-row">${escapeModText(r.mod) || '<span class="mod-tag">无属性加成</span>'}</div>
+    </div>`;
+  }).join("");
+  return `
+  <div class="scroll">
+    <div class="section-label">第二步 · 投胎方式 <span class="idx">02</span></div>
+    <p>你选择的世界是「${state.worldview.name}」——${state.worldview.tagline}。命运之骰投出了三种可能的投胎方式。</p>
+    <div class="card-grid">${cards}</div>
+    <div class="btn-row">
+      <button class="btn primary" id="btn-to-talent" ${state.reincarnation?"":"disabled"}>确认投胎方式</button>
+    </div>
+  </div>`;
+}
+
+function renderTalent(){
+  const round = state.talentRounds[state.currentRound];
+  const chips = [0,1,2].map(i=>{
+    const t = state.chosenTalents[i];
+    return t ? `<div class="chosen-chip">${t.name}</div>` : `<div class="chosen-chip empty">天赋 ${i+1}</div>`;
+  }).join("");
+
+  if(state.currentRound >= 3){
+    return `
+    <div class="scroll">
+      <div class="section-label">第三步 · 命运天赋 <span class="idx">03</span></div>
+      <div class="chosen-strip">${chips}</div>
+      <p>三项天赋已经确定，它们将悄悄影响你即将展开的异世界人生。</p>
+      <div class="btn-row">
+        <button class="btn primary" id="btn-to-stats">前往属性分配</button>
+      </div>
+    </div>`;
+  }
+
+  const cards = round.options.map((t,i)=>`
+    <div class="pick-card" data-talent-idx="${i}">
+      <span class="rarity-badge rarity-${t.rarity}">${RARITY_LABEL[t.rarity]}</span>
+      <h3>${t.name}</h3>
+      <p>${t.desc}</p>
+      <div class="tag-row">${escapeModText(t.mod) || ""}</div>
+    </div>`).join("");
+
+  return `
+  <div class="scroll">
+    <div class="section-label">第三步 · 命运天赋（${state.currentRound+1} / 3） <span class="idx">03</span></div>
+    <div class="chosen-strip">${chips}</div>
+    <p>命运之轮为你呈上三段可能的天赋，选择其中一项，继续你的人生。</p>
+    <div class="card-grid">${cards}</div>
+  </div>`;
+}
+
+function renderStats(){
+  const remain = Math.max(0, remainingBudget());
+  const rows = STAT_KEYS.map(k=>{
+    const v = state.stats[k];
+    const pct = Math.round(v/10*100);
+    const nextCost = costOf(v+1)-costOf(v);
+    const backCost = v>1 ? costOf(v)-costOf(v-1) : 0;
+    const canInc = v<10 && nextCost<=remain;
+    const canDec = v>1;
+    return `<div class="stat-row">
+      <div class="stat-name">${STAT_LABEL[k]}</div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:${pct}%"></div></div>
+      <div class="stat-num">${v}</div>
+      <div class="stat-ctrl">
+        <button data-stat-dec="${k}" ${canDec?"":"disabled"} title="${canDec?`退还 ${backCost} 点`:""}">−</button>
+        <button data-stat-inc="${k}" ${canInc?"":"disabled"} title="${v<10?`花费 ${nextCost} 点`:"已达上限"}">＋</button>
+      </div>
+      <div class="stat-cost-hint">${v<10 ? `下一级 −${nextCost}` : "已满级"}</div>
+    </div>`;
+  }).join("");
+
+  return `
+  <div class="scroll">
+    <div class="section-label">第四步 · 属性分配 <span class="idx">04</span></div>
+    <div class="budget-line"><span>剩余点数</span><b>${remain}</b></div>
+    <p style="margin-top:-8px;">属性等级越高，每提升一级所需的点数也越多（第2级起依次为 2、3、4…点），所以同样点一次「＋」，高等级属性掉的点数会明显更多——这是设计如此，并非漏洞。</p>
+    ${rows}
+    <div class="btn-row">
+      <button class="btn" id="btn-stat-random">随机分配</button>
+      <button class="btn primary" id="btn-to-sim">踏入命运长河</button>
+    </div>
+  </div>`;
+}
+
+function renderSim(){
+  const statusBarHtml = `<div class="status-bar">${STAT_KEYS.map(k=>
+    `<div class="status-chip"><span class="status-label">${STAT_LABEL[k]}</span><span class="status-value">${state.stats[k]}</span></div>`
+  ).join("")}</div>`;
+
+  const logHtml = state.log.map(e=>`
+    <div class="log-entry">
+      <div class="log-age">${e.age}岁</div>
+      <div class="log-text ${e.type||""}">${e.text}</div>
+    </div>`).join("");
+
+  const speeds = [["slow","慢"],["normal","中"],["fast","快"]];
+  const speedBtns = speeds.map(([id,label])=>
+    `<button data-speed="${id}" class="${state.speed===id?'active':''}">${label}</button>`).join("");
+
+  const choiceHtml = state.pendingChoice
+    ? `<div class="choice-panel">
+        <div class="choice-hint">命运的岔路口 · 请做出你的选择</div>
+        ${state.pendingChoice.options.map((opt,i)=>`
+          <button class="btn choice-option" data-choice-idx="${i}">${opt.label}</button>
+        `).join("")}
+      </div>`
+    : "";
+
+  const controls = state.pendingChoice ? "" : (state.finished
+    ? `<div class="btn-row center"><button class="btn primary" id="btn-to-ending">查看结局</button></div>`
+    : `<div class="progress-line">
+        <span>${state.autoPlay ? "正在书写第 "+state.age+" 岁的命运……" : "已暂停 · 第 "+state.age+" 岁"}</span>
+        <div class="speed-toggle">${speedBtns}</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn ${state.autoPlay?"":"primary"}" id="btn-toggle-autoplay">${state.autoPlay ? "⏸ 暂停自动播放" : "▶ 开始自动播放"}</button>
+        ${state.autoPlay ? "" : '<button class="btn primary" id="btn-manual-step">下一年 ▸</button>'}
+      </div>`);
+
+  return `
+  <div class="scroll">
+    <div class="section-label">命运长河 <span class="idx">LIFE</span></div>
+    ${statusBarHtml}
+    <div class="log-wrap" id="log-wrap">${logHtml}</div>
+  </div>
+  ${choiceHtml}
+  ${controls}`;
+}
+
+function renderEnding(){
+  const score = computeScore();
+  const title = state.isHiddenEnding ? HIDDEN_ENDINGS[state.worldview.id].title : computeTitle(score);
+  const achieveHtml = state.achievements.length
+    ? `<div class="achieve-list">${state.achievements.map(a=>`<span class="achieve-chip">${a}</span>`).join("")}</div>`
+    : `<p style="text-align:center;">这一生波澜不惊，未曾留下值得称道的成就。</p>`;
+  const finalStatsHtml = STAT_KEYS.map(k=>`<span class="mod-tag">${STAT_LABEL[k]} ${state.stats[k]}</span>`).join(" ");
+  const hiddenBadge = state.isHiddenEnding
+    ? `<div style="text-align:center; margin-bottom:10px;"><span class="rarity-badge rarity-legendary">隐藏结局 · 极为罕见</span></div>`
+    : "";
+
+  const newUnlockHtml = state.newlyUnlockedThisLife.length
+    ? `<div class="new-unlock-banner">🏆 本局新解锁成就：${state.newlyUnlockedThisLife.join("、")}</div>`
+    : "";
+
+  return `
+  <div class="scroll">
+    <div class="section-label">终章 · 命运定格 <span class="idx">END</span></div>
+    ${hiddenBadge}
+    <div class="ending-title">${title}</div>
+    <div class="ending-sub">享年 ${state.age} 岁 · ${state.causeOfEnd}</div>
+    <div class="score-box"><div class="score-num">${score}</div><div class="score-label">命运积分</div></div>
+    <div style="text-align:center; margin-bottom:14px;">${finalStatsHtml}</div>
+    ${achieveHtml}
+    ${newUnlockHtml}
+    <div class="btn-row center">
+      <button class="btn" id="btn-view-achievements">🏆 查看成就</button>
+      <button class="btn primary" id="btn-restart">再次重开</button>
+    </div>
+  </div>`;
+}
+
+function renderAchievements(){
+  const unlocked = state.unlockedAchievements;
+  const unlockedCount = ACHIEVEMENT_CATALOG.filter(a=>unlocked.has(a.id)).length;
+
+  // 少数「特殊成就」有明确的数值进度，额外显示一行进度提示
+  const progressHints = {
+    "屡败屡战": Math.min(state.playStats.totalLives||0,10)+" / 10",
+    "阅遍诸界": Math.min((state.playStats.worldsPlayed||[]).length,12)+" / 12",
+    "命运收藏家": Math.min((state.playStats.hiddenEndingsUnlocked||[]).length,12)+" / 12"
+  };
+
+  const categories = ["特殊成就","世界成就","隐藏成就"];
+  const sections = categories.map(cat=>{
+    const items = ACHIEVEMENT_CATALOG.filter(a=>a.category===cat);
+    const cards = items.map(a=>{
+      const isUnlocked = unlocked.has(a.id);
+      if(a.hidden && !isUnlocked){
+        return `<div class="achieve-card locked">
+          <div class="achieve-icon">❓</div>
+          <div class="achieve-body">
+            <div class="achieve-name">神秘成就 · ???</div>
+            <div class="achieve-desc">${a.teaser || "达成某个隐藏条件后才会显现真面目。"}</div>
+          </div>
+        </div>`;
+      }
+      const hint = (!isUnlocked && progressHints[a.id]) ? `<div class="achieve-progress">${progressHints[a.id]}</div>` : "";
+      return `<div class="achieve-card ${isUnlocked?"unlocked":"locked"}">
+        <div class="achieve-icon">${isUnlocked?"🏆":"🔒"}</div>
+        <div class="achieve-body">
+          <div class="achieve-name">${a.id}</div>
+          <div class="achieve-desc">${a.desc}</div>
+          ${hint}
+        </div>
+      </div>`;
+    }).join("");
+    return `<div class="section-label" style="margin-top:18px;">${cat}</div>${cards}`;
+  }).join("");
+
+  return `
+  <div class="scroll">
+    <div class="section-label">成就殿堂 <span class="idx">ACHIEVEMENTS</span></div>
+    <div class="achieve-summary">已解锁 ${unlockedCount} / ${ACHIEVEMENT_CATALOG.length}</div>
+    ${sections}
+    <div class="btn-row center">
+      <button class="btn primary" id="btn-achievements-back">返回</button>
+    </div>
+  </div>`;
+}
+
+/* ========================= 事件绑定 ========================= */
+function bindEvents(){
+  const $ = sel => app.querySelector(sel);
+  const $$ = sel => app.querySelectorAll(sel);
+
+  if($("#btn-start")) $("#btn-start").onclick = ()=>{
+    state.worldviewOptions = drawWorldviews();
+    state.worldview = null;
+    state.screen="worldview";
+    render();
+  };
+
+  $$("[data-worldview]").forEach(el=>{
+    el.onclick = ()=>{
+      const id = el.getAttribute("data-worldview");
+      state.worldview = state.worldviewOptions.find(w=>w.id===id);
+      render();
+    };
+  });
+  if($("#btn-to-reincarnation")) $("#btn-to-reincarnation").onclick = ()=>{
+    state.reincarnationOptions = drawReincarnationOptions(state.worldview.id);
+    state.reincarnation = null;
+    state.screen="reincarnation";
+    render();
+  };
+
+  $$("[data-reincarnation]").forEach(el=>{
+    el.onclick = ()=>{
+      const id = el.getAttribute("data-reincarnation");
+      state.reincarnation = state.reincarnationOptions.find(r=>r.id===id);
+      render();
+    };
+  });
+  if($("#btn-to-talent")) $("#btn-to-talent").onclick = ()=>{
+    startTalentDraw();
+    state.screen="talent";
+    render();
+  };
+
+  $$("[data-talent-idx]").forEach(el=>{
+    el.onclick = ()=>{
+      const idx = parseInt(el.getAttribute("data-talent-idx"),10);
+      const round = state.talentRounds[state.currentRound];
+      const chosen = round.options[idx];
+      state.chosenTalents.push(chosen);
+      state.currentRound++;
+      if(state.currentRound < 3) prepareRound(state.currentRound);
+      render();
+    };
+  });
+  if($("#btn-to-stats")) $("#btn-to-stats").onclick = ()=>{
+    applyTalentAndReincarnationMods();
+    state.screen="stats";
+    render();
+  };
+
+  $$("[data-stat-inc]").forEach(el=>{
+    el.onclick = ()=>{
+      const k = el.getAttribute("data-stat-inc");
+      const cost = costOf(state.stats[k]+1)-costOf(state.stats[k]);
+      if(state.stats[k]<10 && cost<=remainingBudget()){ state.stats[k]++; render(); }
+    };
+  });
+  $$("[data-stat-dec]").forEach(el=>{
+    el.onclick = ()=>{
+      const k = el.getAttribute("data-stat-dec");
+      if(state.stats[k]>1){ state.stats[k]--; render(); }
+    };
+  });
+  if($("#btn-stat-random")) $("#btn-stat-random").onclick = ()=>{
+    randomizeStats();
+    render();
+  };
+  if($("#btn-to-sim")) $("#btn-to-sim").onclick = ()=>{
+    startSimulation();
+    state.screen="sim";
+    render();
+  };
+
+  $$("[data-speed]").forEach(el=>{
+    el.onclick = ()=>{
+      state.speed = el.getAttribute("data-speed");
+      render();
+      scheduleNextTick();
+    };
+  });
+  if($("#btn-toggle-autoplay")) $("#btn-toggle-autoplay").onclick = ()=>{
+    state.autoPlay = !state.autoPlay;
+    if(state.autoPlay){
+      state.autoPlayUsedThisLife = true;
+      render();
+      scheduleNextTick();
+    } else {
+      if(state.simTimer) clearTimeout(state.simTimer);
+      render();
+    }
+  };
+  if($("#btn-manual-step")) $("#btn-manual-step").onclick = ()=>{
+    stepAge();
+  };
+  $$("[data-choice-idx]").forEach(el=>{
+    el.onclick = ()=>{
+      const idx = parseInt(el.getAttribute("data-choice-idx"),10);
+      resolveChoice(idx);
+    };
+  });
+  if($("#btn-to-ending")) $("#btn-to-ending").onclick = ()=>{
+    state.screen="ending";
+    render();
+  };
+  if($("#btn-restart")) $("#btn-restart").onclick = ()=>{
+    resetState();
+    render();
+  };
+  if($("#btn-view-achievements")) $("#btn-view-achievements").onclick = ()=>{
+    state.achievementsFrom = state.screen;
+    state.screen = "achievements";
+    render();
+  };
+  if($("#btn-achievements-back")) $("#btn-achievements-back").onclick = ()=>{
+    state.screen = state.achievementsFrom || "intro";
+    render();
+  };
+
+  const logWrap = $("#log-wrap");
+  if(logWrap) logWrap.scrollTop = logWrap.scrollHeight;
+}
+
+/* ========================= 逻辑：世界观抽取 ========================= */
+function drawWorldviews(){
+  const pool = WORLDVIEWS.slice();
+  const result = [];
+  while(result.length<3 && pool.length){
+    const idx = rnd(pool.length);
+    result.push(pool.splice(idx,1)[0]);
+  }
+  return result;
+}
+
+function drawReincarnationOptions(worldId){
+  const pool = REINCARNATIONS_BY_WORLD[worldId].slice();
+  const result = [];
+  while(result.length<3 && pool.length){
+    const idx = rnd(pool.length);
+    result.push(pool.splice(idx,1)[0]);
+  }
+  return result;
+}
+
+/* ========================= 逻辑：天赋抽取 ========================= */
+function startTalentDraw(){
+  state.talentRounds = [];
+  state.currentRound = 0;
+  state.chosenTalents = [];
+  prepareRound(0);
+}
+function availableTalentPool(){
+  return TALENTS.filter(t=> !t.world || t.world===state.worldview.id);
+}
+function prepareRound(idx){
+  const options = weightedTalentDraw(availableTalentPool().filter(t=>!state.chosenTalents.includes(t)), 3);
+  state.talentRounds[idx] = { options, chosen:null };
+}
+
+function applyTalentAndReincarnationMods(){
+  // reset stats baseline：健康/财富从中等水平起步，其余五维属性从1起步交由天赋与投胎方式决定
+  STAT_KEYS.forEach(k=> state.stats[k] = NEUTRAL_STAT_KEYS.includes(k) ? NEUTRAL_STAT_BASELINE : 1);
+  const rMod = state.reincarnation.mod;
+  Object.keys(rMod).forEach(k=> state.stats[k] = Math.max(1, Math.min(10, state.stats[k]+rMod[k])) );
+  state.chosenTalents.forEach(t=>{
+    Object.keys(t.mod).forEach(k=> state.stats[k] = Math.max(1, Math.min(10, state.stats[k]+t.mod[k])) );
+  });
+  state.baseStats = Object.assign({}, state.stats);
+  state.floorCost = STAT_KEYS.reduce((s,k)=>s+costOf(state.baseStats[k]),0);
+}
+
+/* ========================= 逻辑：属性分配 ========================= */
+function randomizeStats(){
+  const base = state.baseStats || {power:1,wit:1,charm:1,luck:1,origin:1,health:NEUTRAL_STAT_BASELINE,wealth:NEUTRAL_STAT_BASELINE};
+  STAT_KEYS.forEach(k=> state.stats[k]=base[k]);
+  let remain = state.budgetTotal; // 天赋加成不占用这部分手动分配额度
+  let guard = 500;
+  while(remain>0 && guard-->0){
+    const k = pick(STAT_KEYS);
+    if(state.stats[k]>=10) continue;
+    const cost = costOf(state.stats[k]+1)-costOf(state.stats[k]);
+    if(cost<=remain){
+      state.stats[k]++;
+      remain -= cost;
+    }
+    if(STAT_KEYS.every(kk=>state.stats[kk]>=10)) break;
+  }
+}
+
+/* ========================= 逻辑：人生模拟 ========================= */
+function getTagSet(){
+  const s = new Set();
+  state.chosenTalents.forEach(t=> t.tags.forEach(tag=>s.add(tag)));
+  return s;
+}
+function stageForAge(age){
+  if(age<=9) return "infant";
+  if(age<=15) return "youth";
+  if(age<=30) return "adult";
+  if(age<=50) return "prime";
+  return "elder";
+}
+function deathChance(age, ctx){
+  let base;
+  if(age<16) base=0.004;
+  else if(age<=50) base=0.006;
+  else base = 0.010 + (age-50)*0.006;
+  const powerLuck = (ctx.stats.power + ctx.stats.luck)/2;
+  base *= Math.max(0.25, 1 - (powerLuck-5)*0.06);
+  // 健康值同样直接影响意外死亡概率：体弱多病的人更容易遭遇不测，身强体健则更容易化险为夷
+  const health = ctx.stats.health!==undefined ? ctx.stats.health : 5;
+  base *= Math.max(0.4, 1 - (health-5)*0.08);
+  return Math.min(base, 0.6);
+}
+
+function startSimulation(){
+  state.log = [];
+  state.achievements = [];
+  state.newlyUnlockedThisLife = [];
+  state.finished = false;
+  state.isHiddenEnding = false;
+  state.autoPlay = false;
+  state.autoPlayUsedThisLife = false;
+  state.alive = true;
+  state.causeOfEnd = null;
+  state.age = state.reincarnation.startAge;
+  const tags = getTagSet();
+  state.flags = new Set();
+  state.pendingChoice = null;
+  state.ctx = { stats: state.stats, tags, world: state.worldview.id, flags: state.flags };
+  state.usedOnce = new Set();
+
+  state.log.push({age:state.age, text: `【${state.worldview.name}】${state.reincarnation.opening}`, type:"milestone"});
+
+  scheduleNextTick();
+}
+
+function speedDelay(){
+  return state.speed==="slow" ? 650 : state.speed==="fast" ? 90 : 280;
+}
+
+function scheduleNextTick(){
+  if(state.simTimer) clearTimeout(state.simTimer);
+  if(state.screen!=="sim" || state.finished || !state.autoPlay) return;
+  state.simTimer = setTimeout(stepAge, speedDelay());
+}
+
+function stepAge(){
+  if(!state.alive || state.finished) return;
+
+  state.age++;
+  const maxNaturalAge = 78 + rnd(18);
+
+  // natural end
+  if(state.age >= maxNaturalAge){
+    if(checkHiddenEnding(state.ctx)){
+      state.isHiddenEnding = true;
+      finishLife(HIDDEN_ENDINGS[state.ctx.world].text);
+    } else {
+      finishLife(computeNaturalEndText());
+    }
+    return;
+  }
+
+  const stageKey = stageForAge(state.age);
+  const pool = EVENTS[stageKey];
+  const ctx = state.ctx;
+  const worldPool = (WORLD_EVENTS[ctx.world] && WORLD_EVENTS[ctx.world][stageKey]) || [];
+
+  // death roll first (skip on the very first simulated tick to avoid instant death feel)
+  const dchance = deathChance(state.age, ctx);
+  const deathPool = pool.filter(e=>e.death && (!e.cond || e.cond(ctx)))
+    .concat(worldPool.filter(e=>e.death && (!e.cond || e.cond(ctx))));
+  if(deathPool.length && Math.random()<dchance){
+    const dEvent = weightedPick(deathPool);
+    state.log.push({age:state.age, text:resolveText(dEvent, ctx), type:"death"});
+    state.alive=false;
+    finishLife(dEvent.cause||"意外离世");
+    return;
+  }
+
+  let eligible = pool.filter(e=>!e.death && (!e.cond || e.cond(ctx)) && !state.usedOnce.has(e));
+  eligible = eligible.concat(worldPool.filter(e=>!e.death && (!e.cond || e.cond(ctx)) && !state.usedOnce.has(e)));
+
+  // 意外事件（纯粹的运气好坏，与世界观、天赋无关）：幼年阶段不参与，之后每年都有机会掺进来
+  if(state.age>=10){
+    const randomPool = RANDOM_EVENTS.fortune.concat(RANDOM_EVENTS.misfortune)
+      .filter(e=>!state.usedOnce.has(e));
+    eligible = eligible.concat(randomPool);
+  }
+
+  // 若该阶段符合条件、且尚未使用过的事件已经耗尽，这一年就安静地过去，
+  // 绝不重复展示同一条已经出现过的事件文本。
+  if(eligible.length){
+    const ev = weightedPick(eligible);
+    state.usedOnce.add(ev);
+
+    // 选择型事件：暂停模拟，等待玩家从多个选项中做出决定，选择结果会真实影响属性与后续剧情
+    if(ev.choice){
+      state.pendingChoice = ev;
+      state.simTimer = null;
+      state.log.push({age:state.age, text:ev.text, type:"choice"});
+      render();
+      return;
+    }
+
+    if(ev.statEffect) applyStatEffect(ev.statEffect);
+    if(ev.setFlag) state.flags.add(ev.setFlag);
+    const isFortune = RANDOM_EVENTS.fortune.indexOf(ev)!==-1;
+    const isMisfortune = RANDOM_EVENTS.misfortune.indexOf(ev)!==-1;
+    const logType = isFortune ? "fortune" : isMisfortune ? "misfortune" : (ev.achievement ? "milestone":"");
+    state.log.push({age:state.age, text:resolveText(ev, ctx), type: logType});
+    if(ev.achievement && state.achievements.indexOf(ev.achievement)===-1){
+      state.achievements.push(ev.achievement);
+      unlockAchievement(ev.achievement);
+    }
+  }
+
+  render();
+  scheduleNextTick();
+}
+
+/* 玩家在选择型事件中做出决定后调用：应用该选项的效果，并恢复模拟 */
+function resolveChoice(optionIdx){
+  const ev = state.pendingChoice;
+  if(!ev) return;
+  const opt = ev.options[optionIdx];
+  if(opt.statEffect) applyStatEffect(opt.statEffect);
+  if(opt.setFlag) state.flags.add(opt.setFlag);
+  state.log.push({age:state.age, text:opt.result, type: opt.achievement ? "milestone" : (opt.logType||"")});
+  if(opt.achievement && state.achievements.indexOf(opt.achievement)===-1){
+    state.achievements.push(opt.achievement);
+    unlockAchievement(opt.achievement);
+  }
+  state.pendingChoice = null;
+  render();
+  scheduleNextTick();
+}
+
+function computeNaturalEndText(){
+  const score = computeScore();
+  // 「羽化飞升」是最高档的自然结局，条件刻意设得极为苛刻：
+  // 不仅命运积分要够高，五维属性还不能有明显短板，人生成就也要足够丰富——
+  // 实测下来，随机游玩几乎不可能达成，只有刻意优化build才有极小概率触及。
+  const noWeakStat = CORE_STAT_KEYS.every(k=>state.stats[k]>=4);
+  const richLife = state.achievements.length>=5;
+  if(score>=200 && noWeakStat && richLife) return ENDINGS.ascend;
+
+  // 其余情况按命运积分分为九档，从「崩坏残生」到「旷世传奇」，
+  // 再按此生最突出的属性挑选对应的收尾文案（健康/财富没有对应的收尾文案，故不参与评选）；
+  // 分数越低，结局也越接近真正意义上的悲剧收场。
+  const dominant = CORE_STAT_KEYS.reduce((best,k)=> state.stats[k]>state.stats[best] ? k : best, CORE_STAT_KEYS[0]);
+  if(score>=180) return ENDINGS.legend[dominant];
+  if(score>=160) return ENDINGS.renowned[dominant];
+  if(score>=140) return ENDINGS.content[dominant];
+  if(score>=120) return ENDINGS.stable[dominant];
+  if(score>=100) return ENDINGS.plain[dominant];
+  if(score>=80) return ENDINGS.quiet[dominant];
+  if(score>=60) return ENDINGS.wasted[dominant];
+  if(score>=40) return ENDINGS.destitute[dominant];
+  return ENDINGS.ruin[dominant];
+}
+
+/* 隐藏结局判定：条件极为苛刻——
+   1) 必须选中了该世界观的专属天赋（传说/史诗级）
+   2) 五维属性总和达到极高水准，且没有明显短板
+   3) 一生中收集到足够多的成就
+   4) 即便前三项全部满足，最终仍要经过一次"命运是否眷顾"的随机考验 */
+function checkHiddenEnding(ctx){
+  const hasSignatureTalent = state.chosenTalents.some(t => t.world === ctx.world);
+  const statSum = CORE_STAT_KEYS.reduce((s,k)=>s+state.stats[k], 0);
+  const noWeakStat = CORE_STAT_KEYS.every(k=>state.stats[k]>=3);
+  const meetsStatBar = statSum>=22 && noWeakStat;
+  const meetsAchievements = state.achievements.length>=4;
+  if(hasSignatureTalent && meetsStatBar && meetsAchievements){
+    return Math.random() < 0.35;
+  }
+  return false;
+}
+
+function finishLife(causeOrText){
+  state.finished = true;
+  if(state.alive){
+    state.log.push({age:state.age, text:causeOrText, type:"milestone"});
+    state.causeOfEnd = state.isHiddenEnding ? "命运的垂青" : "自然终老";
+  } else {
+    state.causeOfEnd = causeOrText;
+  }
+  checkMetaAchievements();
+  render();
+}
+
+/* ========================= 逻辑：结局评分 ========================= */
+function computeScore(){
+  const statSum = CORE_STAT_KEYS.reduce((s,k)=>s+state.stats[k],0);
+  // 健康与财富的基准值是5（而非其余五维的1），若直接并入statSum会让每局的基准分数
+  // 整体上浮，打乱已经校准过的结局分层与隐藏结局门槛，所以单独按「偏离基准值多少」计分，
+  // 让这两项属性依然能实实在在地影响命运积分，又不至于扰乱原有的评分尺度。
+  const vitalityScore = NEUTRAL_STAT_KEYS.reduce((s,k)=>s+(state.stats[k]-NEUTRAL_STAT_BASELINE),0) * 3;
+  const rarityScore = state.chosenTalents.reduce((s,t)=>{
+    const map={legendary:22, epic:14, rare:8, common:3, flaw:-4};
+    return s+map[t.rarity];
+  },0);
+  const achieveScore = state.achievements.length*14;
+  const ageScore = Math.min(20, Math.floor(state.age/5));
+  return Math.max(0, statSum*4 + vitalityScore + rarityScore + achieveScore + ageScore);
+}
+function computeTitle(score){
+  if(score>=230) return "异世界之神";
+  if(score>=180) return "传说勇者";
+  if(score>=130) return "一方豪杰";
+  if(score>=90) return "崭露头角的冒险者";
+  if(score>=50) return "平凡的异世界过客";
+  return "路人甲";
+}
+
+/* ========================= 重置 ========================= */
+function resetState(){
+  state.screen="intro";
+  state.worldview=null;
+  state.worldviewOptions=[];
+  state.reincarnation=null;
+  state.reincarnationOptions=[];
+  state.talentRounds=[];
+  state.currentRound=0;
+  state.chosenTalents=[];
+  state.stats={power:1,wit:1,charm:1,luck:1,origin:1,health:5,wealth:5};
+  state.baseStats=null;
+  state.floorCost=0;
+  state.log=[];
+  state.age=0;
+  state.alive=true;
+  state.achievements=[];
+  state.causeOfEnd=null;
+  state.finished=false;
+  state.isHiddenEnding=false;
+  state.autoPlay=false;
+  state.flags=null;
+  state.pendingChoice=null;
+  if(state.simTimer) clearTimeout(state.simTimer);
+}
+
+render();
+loadPersistedData().then(()=>{ render(); });
+})();
+</script>
+
+<script>
+  // 注册 Service Worker：让游戏可以被"安装"到主屏幕/桌面，并支持离线打开。
+  // 只有通过 http(s) 正式部署后才会生效，用 file:// 直接双击打开时浏览器会自动跳过，不影响正常游玩。
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {
+        // 静默失败即可：本地直接打开文件、或未部署在 http(s) 环境下都属于正常情况
+      });
+    });
+  }
+</script>
+</body>
+</html>

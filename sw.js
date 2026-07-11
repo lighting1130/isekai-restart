@@ -1,7 +1,7 @@
 // 异世界重开模拟器 - Service Worker
 // 采用 cache-first 策略：优先读缓存，保证离线也能正常打开游戏。
 // 每次发布更新时，把 CACHE_NAME 的版本号改一下，就能让浏览器换上新缓存。
-const CACHE_NAME = "isekai-restart-v1";
+const CACHE_NAME = "isekai-restart-v2";
 const ASSETS = [
   "./",
   "./index.html",

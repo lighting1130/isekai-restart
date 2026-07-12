@@ -146,6 +146,7 @@
   }
   .mod-tag.pos{color:var(--success); border-color:rgba(111,217,160,0.35);}
   .mod-tag.neg{color:var(--danger); border-color:rgba(224,97,92,0.35);}
+  .mod-tag.mystery{color:var(--text-dim); border-style:dashed; font-style:italic; opacity:0.75;}
 
   .rarity-badge{
     font-size:11px; padding:2px 9px; border-radius:20px; font-weight:600;
@@ -307,6 +308,13 @@
     background:rgba(216,178,106,0.1); padding:12px 14px;
     margin-bottom:16px; font-size:13px; color:var(--gold); text-align:center;
   }
+  .meta-progress-line{
+    border:1px solid rgba(216,178,106,0.3); border-radius:10px;
+    background:rgba(216,178,106,0.05); padding:10px 14px;
+    margin:14px 0; font-size:12.5px; color:var(--text-dim); text-align:center; line-height:1.6;
+  }
+  .meta-progress-line div+div{ margin-top:4px; }
+  .meta-progress-line b{ color:var(--gold); }
 
   @media (max-width:480px){
     h1.title{font-size:26px;}
@@ -699,6 +707,8 @@ const TALENTS = [
    desc:"似乎被这个世界的意志所眷顾，重大的剧情总会主动找上门来。"},
   {id:"transcendent", name:"天生异数", rarity:"epic", tags:["transcendent"], mod:{origin:1},
    desc:"体内潜藏着超越凡俗躯壳的可能性，比旁人更容易、更早地迎来蜕变突破的契机。"},
+  {id:"samsara_power", name:"轮回之力", rarity:"epic", tags:[], mod:{power:1,wit:1,luck:1}, requiresMeta:"meta_talent",
+   desc:"你的灵魂已经跨越了太多段轮回，哪怕转生到全新的一世，骨子里依然带着一丝说不清道不明的沉淀力量。"},
   {id:"noble_born", name:"转生贵族", rarity:"rare", tags:[], mod:{origin:3},
    desc:"出身高贵的异世界名门之后，从小锦衣玉食，仆从成群。"},
   {id:"familiar", name:"契约灵兽", rarity:"rare", tags:["familiar"], mod:{power:1},
@@ -812,6 +822,10 @@ const TALENTS = [
    desc:"你天生记仇，一点小事都能让你耿耿于怀，无形中得罪了不少人。"}
 ];
 const RARITY_LABEL = {legendary:"传说", epic:"史诗", rare:"稀有", common:"普通", flaw:"缺陷"};
+/* 选择天赋时，缺陷天赋在界面上的展示（徽章颜色与文字）都会当作"普通"来处理，
+   不再有任何颜色或文字上的"危险信号"提示这是个缺陷——玩家必须真正读一遍描述，才能分辨出来。
+   注意：这只影响展示，天赋本身的稀有度（抽取概率权重等）不受影响。 */
+function displayRarity(rarity){ return rarity==="flaw" ? "common" : rarity; }
 const RARITY_WEIGHT = {legendary:2, epic:6, rare:16, common:38, flaw:38};
 
 /* 事件池：age:[min,max]  cond(ctx)=>bool   effect(ctx)=>void   weight   once   achievement  death */
@@ -1936,9 +1950,9 @@ const WORLD_EVENTS = {
       {text:"你在一次心境试炼中直面自己内心最深处的恐惧，虽然浑身冷汗，最终却也从容通过。", weight:6},
       {text:"你无意间路过一处尸变横生之地，凭着果断的手段全身而退，也算是长了不少见识。", weight:6},
       {text:"你在游历途中与一位红尘中人结下一段情缘，却因为修行之路而不得不面临抉择。", weight:6, setFlag:"qixiu_love"},
-      {choice:true, weight:5, repeatable:true, text:"你感觉到体内的灵气已经充盈到了极限，一次筑基的契机就在眼前——这是你踏上仙途的第一道关卡，虽不算太凶险，却也十人九散。", cond:c=>state.breakthroughCount===0 && state.age>=(hasTag(c,"transcendent")?16:20) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?5:8)), options:[
+      {choice:true, weight:5, repeatable:true, text:"你感觉到体内的灵气已经充盈到了极限，一次筑基的契机就在眼前——这是你踏上仙途的第一道关卡，虽不算太凶险，却也十人九散。", cond:c=>worldStateVal(c,"qixiu_realm")===0 && state.age>=(hasTag(c,"transcendent")?16:20) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?5:8)), options:[
         {label:"尝试筑基", riskyChance:0.65, lifespanBonus:30, successEffect:{power:3,wit:2,health:1},
-         successResult:"你成功筑基，灵气如江河般在经脉中流转，从此正式踏入了修仙之途，寿元也随之增长。", successAchievement:"强行筑基",
+         successResult:"你成功筑基，灵气如江河般在经脉中流转，从此正式踏入了修仙之途，寿元也随之增长。", successAchievement:"强行筑基", worldStateKey:"qixiu_realm", worldStateDelta:1,
          failResult:"灵气反噬冲垮了你的经脉，你气血逆流，就此气绝身亡。", failDeath:true, failDeathChance:0.3, failCause:"筑基失败",
          regressResult:"筑基失败，经脉受到不小的冲击，你只能日后再寻机会重新尝试。", regressEffect:{health:-1}},
         {label:"不冒险，安心做个凡俗修士", result:"你决定不再冒险，安心做个凡俗修士，把这份心思用在了别处。", statEffect:{luck:1}}
@@ -1970,9 +1984,9 @@ const WORLD_EVENTS = {
         {label:"赠予延寿之法，续写情缘", result:"你赠予了对方一份延寿之法，两人的情缘因此得以续写，只是往后要面对的因果，谁也说不清。", statEffect:{wealth:-2,charm:1}},
         {label:"含泪作别，专心修行", result:"你含泪与对方作别，转身专心投入修行，只是这份牵挂，此后多年都未曾真正放下。", statEffect:{power:1,luck:-1}}
       ]},
-      {choice:true, weight:5, repeatable:true, text:"筑基多年后，你终于感觉到凝丹的时机已经成熟——金丹一道，十人九丹散，这是修仙路上真正意义上的第一道生死关。", cond:c=>state.breakthroughCount===1 && state.age>=(hasTag(c,"transcendent")?31:35) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?6:10)), options:[
+      {choice:true, weight:5, repeatable:true, text:"筑基多年后，你终于感觉到凝丹的时机已经成熟——金丹一道，十人九丹散，这是修仙路上真正意义上的第一道生死关。", cond:c=>worldStateVal(c,"qixiu_realm")===1 && state.age>=(hasTag(c,"transcendent")?31:35) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?6:10)), options:[
         {label:"尝试凝丹", riskyChance:0.45, lifespanBonus:80, successEffect:{power:4,wit:3,health:2},
-         successResult:"金丹凝聚成功！丹田中那一粒金丹光华流转，你的寿元大幅增长，修为也今非昔比。", successAchievement:"金丹圆满",
+         successResult:"金丹凝聚成功！丹田中那一粒金丹光华流转，你的寿元大幅增长，修为也今非昔比。", successAchievement:"金丹圆满", worldStateKey:"qixiu_realm", worldStateDelta:1,
          failResult:"凝丹失败，丹田彻底崩碎，气血逆冲之下，你当场气绝身亡。", failDeath:true, failDeathChance:0.5, failCause:"凝丹失败",
          regressResult:"凝丹失败，丹田受创，你只能眼看着即将成型的金丹碎裂消散，修为也因此倒退了不少。", regressEffect:{power:-2,wit:-2}, regressLifespanPenalty:10},
         {label:"将毕生修为反哺宗门", result:"你选择将毕生修为反哺宗门，滋养了整个宗门的根基，自己却也因此加速了寿元的流逝。", statEffect:{origin:2}, achievement:"反哺宗门"},
@@ -1990,32 +2004,32 @@ const WORLD_EVENTS = {
       {text:"你临终前将自己压箱底的最后一件法宝悄悄藏进了后山，只留下一句让人参悟半生的偈语。", weight:6},
       {text:"你把自己毕生游历散修界的见闻整理成册，留给了后来的年轻散修们作为参考。", weight:6},
       {text:"你在临终前将自己培育多年的那株灵药树移栽回了宗门后山，希望它能继续庇护后来人。", weight:6},
-      {choice:true, weight:5, repeatable:true, text:"金丹圆满之后，你终于迎来了凝结元婴的契机——元婴一道，是凡俗与真正长生之间的分水岭。", cond:c=>state.breakthroughCount===2 && state.age>=(hasTag(c,"transcendent")?51:55) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?9:15)), options:[
+      {choice:true, weight:5, repeatable:true, text:"金丹圆满之后，你终于迎来了凝结元婴的契机——元婴一道，是凡俗与真正长生之间的分水岭。", cond:c=>worldStateVal(c,"qixiu_realm")===2 && state.age>=(hasTag(c,"transcendent")?51:55) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?9:15)), options:[
         {label:"尝试凝结元婴", riskyChance:0.28, lifespanBonus:200, successEffect:{power:6,wit:5,luck:2},
-         successResult:"元婴凝结成功！你终于跨过了凡俗与长生的分水岭，寿元大幅跃升，一举成为方圆百里罕见的元婴真人。", successAchievement:"元婴大成",
+         successResult:"元婴凝结成功！你终于跨过了凡俗与长生的分水岭，寿元大幅跃升，一举成为方圆百里罕见的元婴真人。", successAchievement:"元婴大成", worldStateKey:"qixiu_realm", worldStateDelta:1,
          failResult:"元婴凝结失败，法力反噬彻底击溃了你的道基，你形神俱灭。", failDeath:true, failDeathChance:0.6, failCause:"元婴溃散",
          regressResult:"元婴凝结失败，法力反噬几乎击溃了你的道基，修为大幅倒退，好在勉强保住了这条命。", regressEffect:{power:-3,wit:-3,health:-2}, regressLifespanPenalty:20},
         {label:"将毕生修为反哺宗门", result:"你选择将毕生修为反哺宗门，滋养了整个宗门的根基，自己却也因此加速了寿元的流逝。", statEffect:{origin:2}, achievement:"反哺宗门"},
         {label:"不冒险，止步于金丹之境", result:"你决定不再冒险，安心停留在金丹之境，把这具身子好好养着。", statEffect:{luck:1}}
       ]},
-      {choice:true, weight:5, repeatable:true, text:"元婴大成之后，你隐隐触摸到了化神的门槛——这一步跨过去，便是真正意义上的半步登仙，跨不过去，便是形神俱灭。", cond:c=>state.breakthroughCount===3 && state.age>=(hasTag(c,"transcendent")?65:90) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?12:20)), options:[
+      {choice:true, weight:5, repeatable:true, text:"元婴大成之后，你隐隐触摸到了化神的门槛——这一步跨过去，便是真正意义上的半步登仙，跨不过去，便是形神俱灭。", cond:c=>worldStateVal(c,"qixiu_realm")===3 && state.age>=(hasTag(c,"transcendent")?65:90) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?12:20)), options:[
         {label:"尝试化神", riskyChance:0.15, lifespanBonus:500, successEffect:{power:8,wit:7,luck:3},
-         successResult:"化神成功！你的神魄与天地灵气彻底交融，寿元一举跃升数百年，方圆数千里再无人敢轻视你的存在。", successAchievement:"化神有成",
+         successResult:"化神成功！你的神魄与天地灵气彻底交融，寿元一举跃升数百年，方圆数千里再无人敢轻视你的存在。", successAchievement:"化神有成", worldStateKey:"qixiu_realm", worldStateDelta:1,
          failResult:"化神失败，神魄当场被彻底撕碎，一缕残念都未能留下。", failDeath:true, failDeathChance:0.7, failCause:"神魄破碎",
          regressResult:"化神失败，神魄险些被撕碎，你侥幸保住了这条命，只是境界大幅倒退，短时间内再难有二次尝试的余力。", regressEffect:{power:-4,wit:-4,luck:-2}, regressLifespanPenalty:40},
         {label:"将毕生修为反哺宗门", result:"你选择将毕生修为反哺宗门，滋养了整个宗门的根基，自己却也因此加速了寿元的流逝。", statEffect:{origin:2}, achievement:"反哺宗门"},
         {label:"不冒险，止步于元婴之境", result:"你决定不再冒险，安心停留在元婴之境，把这具身子好好养着。", statEffect:{luck:1}}
       ]},
-      {choice:true, weight:5, repeatable:true, text:"化神大成之后，你终于站在了大乘之境的门口——这一步，便是真正意义上的渡劫飞升，一旦功成，便是脱离凡俗轮回、位列仙班。", cond:c=>state.breakthroughCount===4 && state.age>=(hasTag(c,"transcendent")?110:150) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?15:25)), options:[
+      {choice:true, weight:5, repeatable:true, text:"化神大成之后，你终于站在了大乘之境的门口——这一步，便是真正意义上的渡劫飞升，一旦功成，便是脱离凡俗轮回、位列仙班。", cond:c=>worldStateVal(c,"qixiu_realm")===4 && state.age>=(hasTag(c,"transcendent")?110:150) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?15:25)), options:[
         {label:"渡劫飞升", riskyChance:0.08, lifespanBonus:1000, successEffect:{power:10,wit:10,luck:5},
-         successResult:"你渡过了这最后一劫，肉身与神魄同时蜕变，正式踏入大乘之境——从今往后，你已不再是这个世界的凡俗生灵。", successAchievement:"大乘飞升",
+         successResult:"你渡过了这最后一劫，肉身与神魄同时蜕变，正式踏入大乘之境——从今往后，你已不再是这个世界的凡俗生灵。", successAchievement:"大乘飞升", worldStateKey:"qixiu_realm", worldStateDelta:1,
          failResult:"天劫骤然降临，你没能扛住这最后一劫，形神俱灭，一缕真魂消散在漫天雷光之中。", failDeath:true, failDeathChance:0.8, failCause:"渡劫失败",
          regressResult:"天劫骤然降临，你侥幸没有形神俱灭，却也被劈得道基受损、境界大幅倒退，往后的路要从头再来。", regressEffect:{power:-5,wit:-5,luck:-3}, regressLifespanPenalty:80},
         {label:"将毕生修为反哺宗门", result:"你选择将毕生修为反哺宗门，滋养了整个宗门的根基，自己却也因此加速了寿元的流逝。", statEffect:{origin:2}, achievement:"反哺宗门"},
         {label:"不冒险，止步于化神之境", result:"你决定不再冒险，安心停留在化神之境，把这具身子好好养着。", statEffect:{luck:1}}
       ]},
-      {death:true, text:"突破后的境界并不如想象中那般稳固，一场突如其来的心魔反噬，让你道基崩碎，形神俱灭。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"心魔反噬"},
-      {text:"突破之后，你的一举一动都隐隐带着几分吞天噬地的威压，寻常修士见了你都要退避三分。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"power")>=8},
+      {death:true, text:"突破后的境界并不如想象中那般稳固，一场突如其来的心魔反噬，让你道基崩碎，形神俱灭。", weight:1, cond:c=>worldStateVal(c,"qixiu_realm")>=1, cause:"心魔反噬"},
+      {text:"突破之后，你的一举一动都隐隐带着几分吞天噬地的威压，寻常修士见了你都要退避三分。", weight:6, cond:c=>worldStateVal(c,"qixiu_realm")>=1 && stat(c,"power")>=8},
       {text:"这些年宗门唯才是举的风气早已深入人心，你亲眼见证了这片修仙界因为当年那个决定，多出了多少意气风发的年轻面孔。", weight:6, cond:c=>worldStateVal(c,"qixiu_sectInfluence")>=2},
       {text:"这些年宗门依旧论资排辈，你看着一个个真正有天赋的弟子黯然离宗，心里明白，这条路终究还是走窄了。", weight:6, cond:c=>worldStateVal(c,"qixiu_sectInfluence")<=-1}
     ]
@@ -3364,14 +3378,6 @@ function weightedTalentDraw(pool, count){
   }
   return chosen;
 }
-function costOf(level){ return level*(level+1)/2; }
-function escapeModText(mod){
-  return Object.keys(mod).map(k=>{
-    const v = mod[k];
-    return `<span class="mod-tag ${v>0?'pos':'neg'}">${STAT_LABEL[k]}${v>0?'+':''}${v}</span>`;
-  }).join("");
-}
-
 /* ========================= 状态 ========================= */
 const state = {
   screen:"intro",
@@ -3383,7 +3389,7 @@ const state = {
   currentRound:0,
   chosenTalents:[],
   stats:{power:1,wit:1,charm:1,luck:1,origin:1,health:5,wealth:5},
-  budgetTotal:26,
+  budgetTotal:12,
   log:[],
   age:0,
   alive:true,
@@ -3405,36 +3411,111 @@ const state = {
   lastBreakthroughAge:-999,          // 上一次尝试突破寿元时的年龄，用于拉开突破之间的最短间隔
   gender:null,                       // 本局角色的性别，开局随机决定，也可能被特定命运天赋强制锁定
   worldState:null,                   // 本局世界随玩家选择累积产生的变化（数值型，如"民心""繁荣度"等），运行时初始化
-  achievementsFrom:"intro"           // 记录从哪个界面进入成就殿堂，方便返回
+  achievementsFrom:"intro",          // 记录从哪个界面进入成就殿堂，方便返回
+  metaProgress:null,                 // 跨越多局持久保存的"局外成长"进度，运行时由loadPersistedData初始化
+  newlyUnlockedMilestones:[],        // 本局刚刚解锁的局外成长里程碑，用于结局画面展示
+  worldRerollUsed:false              // 本局是否已经使用过"命运重掷"这一局外成长福利
 };
 
-/* ========================= 成就系统：持久化存储 ========================= */
-const HAS_STORAGE = typeof window !== "undefined" && !!window.storage;
+/* ========================= 成就系统：持久化存储 =========================
+   window.storage 是 Claude.ai 内置 artifact 的专属存储接口，只有在 Claude.ai 里直接运行时才存在；
+   一旦把游戏打包成独立网页（比如部署到自己的域名、或者直接用浏览器打开本地文件），
+   window.storage 就不存在了——这也是之前"每次打开都是全新的"的根本原因。
+   这里补上 localStorage 作为通用浏览器环境下的存储方案：只要是同一个浏览器、同一个来源(origin)，
+   进度和成就就会被浏览器本地保留下来，下次再打开也能读取回来。两种存储会同时尝试写入，
+   哪种环境可用就用哪种，确保无论是在 Claude.ai 里玩，还是把文件保存下来单独打开，都能记住进度。 */
+const HAS_ARTIFACT_STORAGE = typeof window !== "undefined" && !!window.storage;
+const HAS_LOCAL_STORAGE = (()=>{
+  if(typeof window === "undefined" || !window.localStorage) return false;
+  try{ window.localStorage.setItem("__isekai_probe__","1"); window.localStorage.removeItem("__isekai_probe__"); return true; }
+  catch(e){ return false; } // 部分浏览器的隐私模式下 localStorage 存在但会抛错，需要提前探测
+})();
+const LOCAL_STORAGE_PREFIX = "isekai_restart_";
+
+async function storageGetValue(key){
+  if(HAS_ARTIFACT_STORAGE){
+    try{ const res = await window.storage.get(key, false); if(res && res.value!=null) return res.value; }
+    catch(e){ /* 尚未有存档，继续尝试下一种存储方式 */ }
+  }
+  if(HAS_LOCAL_STORAGE){
+    try{ const v = window.localStorage.getItem(LOCAL_STORAGE_PREFIX+key); if(v!=null) return v; }
+    catch(e){ /* 静默忽略 */ }
+  }
+  return null;
+}
+async function storageSetValue(key, value){
+  if(HAS_ARTIFACT_STORAGE){
+    try{ await window.storage.set(key, value, false); }catch(e){ /* 静默忽略 */ }
+  }
+  if(HAS_LOCAL_STORAGE){
+    try{ window.localStorage.setItem(LOCAL_STORAGE_PREFIX+key, value); }catch(e){ /* 静默忽略 */ }
+  }
+}
+
+/* ========================= 局外成长（跨局持久成长） =========================
+   "局外成长"指的是：即便每一局的世界观、天赋、事件都是从零随机开始，
+   玩家跨越很多局积累下来的"经历过多少段人生"这件事本身，也应该被这个游戏记住、并给出回馈——
+   否则"重开模拟器"就真的只是一次性的东西，而不是一个可以长期把玩的游戏。
+   设计上刻意保持"温和"：解锁的都是小优化、小惊喜、纪念性内容，绝不会让游戏变得"一眼看穿"或者
+   直接堆数值碾压过去的随机性——核心的生死、突破、结局依然完全看这一局的运气与选择。 */
+const META_MILESTONES = [
+  {lives:5,  id:"meta_luck1",   name:"薄有气运",   desc:"此后每一局开局都会额外获得 +1 幸运。"},
+  {lives:15, id:"meta_reroll",  name:"命运重掷",   desc:"往后每局开局面对三个世界观选项时，多一次重新抽取的机会。"},
+  {lives:30, id:"meta_talent",  name:"轮回之力",   desc:"命运天赋池中，从此可能抽到「轮回之力」这一独特天赋。"},
+  {lives:50, id:"meta_luck2",   name:"气运渐丰",   desc:"此后每一局开局再额外获得 +1 幸运（与「薄有气运」叠加）。"},
+  {lives:100,id:"meta_master",  name:"轮回大师",   desc:"这份纪念会作为专属印记，出现在此后每一局的终章画面上。"}
+];
+function defaultMetaProgress(){
+  return {totalLivesCompleted:0, unlockedMilestones:[]};
+}
+function checkMetaMilestones(){
+  const mp = state.metaProgress || (state.metaProgress = defaultMetaProgress());
+  mp.totalLivesCompleted++;
+  const newlyUnlocked = [];
+  META_MILESTONES.forEach(m=>{
+    if(mp.totalLivesCompleted>=m.lives && !mp.unlockedMilestones.includes(m.id)){
+      mp.unlockedMilestones.push(m.id);
+      newlyUnlocked.push(m);
+    }
+  });
+  savePersistedMetaProgress();
+  return newlyUnlocked;
+}
+function hasMetaMilestone(id){
+  return !!(state.metaProgress && state.metaProgress.unlockedMilestones.includes(id));
+}
 
 async function loadPersistedData(){
-  if(!HAS_STORAGE) return;
+  if(!HAS_ARTIFACT_STORAGE && !HAS_LOCAL_STORAGE) return;
   try{
-    const res = await window.storage.get("unlocked_achievements", false);
-    if(res && res.value) state.unlockedAchievements = new Set(JSON.parse(res.value));
+    const v = await storageGetValue("unlocked_achievements");
+    if(v) state.unlockedAchievements = new Set(JSON.parse(v));
   }catch(e){ /* 尚未有存档，保持空集合 */ }
   try{
-    const res2 = await window.storage.get("play_stats", false);
-    if(res2 && res2.value) state.playStats = Object.assign(
+    const v2 = await storageGetValue("play_stats");
+    if(v2) state.playStats = Object.assign(
       {totalLives:0, worldsPlayed:[], hiddenEndingsUnlocked:[]},
-      JSON.parse(res2.value)
+      JSON.parse(v2)
     );
   }catch(e){ /* 尚未有存档，保持默认值 */ }
+  try{
+    const v3 = await storageGetValue("meta_progress");
+    if(v3) state.metaProgress = Object.assign(defaultMetaProgress(), JSON.parse(v3));
+    else state.metaProgress = defaultMetaProgress();
+  }catch(e){ state.metaProgress = defaultMetaProgress(); }
 }
 
 async function savePersistedAchievements(){
-  if(!HAS_STORAGE) return;
-  try{ await window.storage.set("unlocked_achievements", JSON.stringify([...state.unlockedAchievements]), false); }
-  catch(e){ /* 存储失败时静默忽略，不影响游戏本身进行 */ }
+  if(!HAS_ARTIFACT_STORAGE && !HAS_LOCAL_STORAGE) return;
+  await storageSetValue("unlocked_achievements", JSON.stringify([...state.unlockedAchievements]));
 }
 async function savePersistedStats(){
-  if(!HAS_STORAGE) return;
-  try{ await window.storage.set("play_stats", JSON.stringify(state.playStats), false); }
-  catch(e){ /* 存储失败时静默忽略 */ }
+  if(!HAS_ARTIFACT_STORAGE && !HAS_LOCAL_STORAGE) return;
+  await storageSetValue("play_stats", JSON.stringify(state.playStats));
+}
+async function savePersistedMetaProgress(){
+  if(!HAS_ARTIFACT_STORAGE && !HAS_LOCAL_STORAGE) return;
+  await storageSetValue("meta_progress", JSON.stringify(state.metaProgress));
 }
 
 /* 解锁一个成就：id 必须与 ACHIEVEMENT_CATALOG 中的 id 完全一致。
@@ -3505,12 +3586,12 @@ function checkMetaAchievements(){
 }
 
 function baseBudgetUsed(){
-  return STAT_KEYS.reduce((s,k)=>s+costOf(state.stats[k]),0);
+  // 加点模式下，花费的点数就是"当前值 - 天赋/投胎方式带来的基础值"的直接差额，1点对应1点，
+  // 不再有等级曲线，也就不会再出现"退还的点数比想象中多或少"这种反直觉的情况。
+  return STAT_KEYS.reduce((s,k)=>s+Math.max(0, state.stats[k]-(state.baseStats?state.baseStats[k]:1)),0);
 }
 function remainingBudget(){
-  // 天赋与投胎方式带来的属性加成不占用玩家可分配的点数：
-  // 可用总额 = 手动分配点数(budgetTotal) + 天赋加成本身消耗的"点数"(floorCost)
-  return state.budgetTotal + (state.floorCost||0) - baseBudgetUsed();
+  return state.budgetTotal - baseBudgetUsed();
 }
 
 /* ========================= 渲染 ========================= */
@@ -3539,11 +3620,20 @@ function render(){
 function renderIntro(){
   const unlockedCount = state.unlockedAchievements.size;
   const totalCount = ACHIEVEMENT_CATALOG.length;
+  const mp = state.metaProgress || defaultMetaProgress();
+  const nextMilestone = META_MILESTONES.find(m=>!mp.unlockedMilestones.includes(m.id));
+  const metaHtml = `<div class="meta-progress-line">
+      <div>🌀 已完整经历 <b>${mp.totalLivesCompleted}</b> 段人生</div>
+      ${nextMilestone
+        ? `<div>再经历 <b>${nextMilestone.lives-mp.totalLivesCompleted}</b> 局解锁「${nextMilestone.name}」：${nextMilestone.desc}</div>`
+        : `<div>已解锁全部局外成长里程碑</div>`}
+    </div>`;
   return `
   <div class="scroll">
     <div class="section-label">序章 <span class="idx">PROLOGUE</span></div>
     <p>你在毫无预兆的情况下失去了对原来世界的记忆，再次睁眼时，眼前是一片陌生却又充满魔力波动的天空。</p>
     <p>你将经历世界观的抽取、投胎方式的选择、命运天赋的抽取、初始属性的分配，然后见证一段完整的异世界人生——从呱呱坠地，到落幕归尘。</p>
+    ${metaHtml}
     <div class="btn-row center">
       <button class="btn primary" id="btn-start">开始转生</button>
       <button class="btn" id="btn-view-achievements">🏆 成就殿堂 （${unlockedCount} / ${totalCount}）</button>
@@ -3560,12 +3650,17 @@ function renderWorldview(){
       <div class="tag-row"><span class="mod-tag">${w.tagline}</span></div>
     </div>`;
   }).join("");
+  const canReroll = hasMetaMilestone("meta_reroll") && !state.worldRerollUsed;
+  const rerollBtn = hasMetaMilestone("meta_reroll")
+    ? `<button class="btn" id="btn-world-reroll" ${canReroll?"":"disabled"}>🎲 命运重掷${state.worldRerollUsed?"（本局已用）":"（局外成长福利，每局1次）"}</button>`
+    : "";
   return `
   <div class="scroll">
     <div class="section-label">第一步 · 转生世界观 <span class="idx">01</span></div>
     <p>命运之骰第一次投出了三种可能的世界，选择你即将踏入的舞台。</p>
     <div class="card-grid">${cards}</div>
     <div class="btn-row">
+      ${rerollBtn}
       <button class="btn primary" id="btn-to-reincarnation" ${state.worldview?"":"disabled"}>确认世界观</button>
     </div>
   </div>`;
@@ -3578,13 +3673,14 @@ function renderReincarnation(){
     return `<div class="pick-card ${sel}" data-reincarnation="${r.id}">
       <h3>${r.name}</h3>
       <p>${r.desc}</p>
-      <div class="tag-row">${escapeModText(r.mod) || '<span class="mod-tag">无属性加成</span>'}</div>
+      <div class="tag-row"><span class="mod-tag mystery">命运的底子，尚未揭晓</span></div>
     </div>`;
   }).join("");
   return `
   <div class="scroll">
     <div class="section-label">第二步 · 投胎方式 <span class="idx">02</span></div>
     <p>你选择的世界是「${state.worldview.name}」——${state.worldview.tagline}。命运之骰投出了三种可能的投胎方式。</p>
+    <p style="margin-top:-8px; font-size:12.5px; color:var(--text-dim);">每种投胎方式都会悄悄影响你的先天底子，具体如何，要等这段人生正式展开时才会揭晓。</p>
     <div class="card-grid">${cards}</div>
     <div class="btn-row">
       <button class="btn primary" id="btn-to-talent" ${state.reincarnation?"":"disabled"}>确认投胎方式</button>
@@ -3613,10 +3709,10 @@ function renderTalent(){
 
   const cards = round.options.map((t,i)=>`
     <div class="pick-card" data-talent-idx="${i}">
-      <span class="rarity-badge rarity-${t.rarity}">${RARITY_LABEL[t.rarity]}</span>
+      <span class="rarity-badge rarity-${displayRarity(t.rarity)}">${RARITY_LABEL[displayRarity(t.rarity)]}</span>
       <h3>${t.name}</h3>
       <p>${t.desc}</p>
-      <div class="tag-row">${escapeModText(t.mod) || ""}</div>
+      <div class="tag-row"><span class="mod-tag mystery">命运的底子，尚未揭晓</span></div>
     </div>`).join("");
 
   return `
@@ -3632,20 +3728,19 @@ function renderStats(){
   const remain = Math.max(0, remainingBudget());
   const rows = STAT_KEYS.map(k=>{
     const v = state.stats[k];
+    const floor = state.baseStats ? state.baseStats[k] : 1;
     const pct = Math.round(v/10*100);
-    const nextCost = costOf(v+1)-costOf(v);
-    const backCost = v>1 ? costOf(v)-costOf(v-1) : 0;
-    const canInc = v<10 && nextCost<=remain;
-    const canDec = v>1;
+    const canInc = v<10 && remain>=1;
+    const canDec = v>floor;
     return `<div class="stat-row">
       <div class="stat-name">${STAT_LABEL[k]}</div>
       <div class="stat-bar"><div class="stat-bar-fill" style="width:${pct}%"></div></div>
       <div class="stat-num">${v}</div>
       <div class="stat-ctrl">
-        <button data-stat-dec="${k}" ${canDec?"":"disabled"} title="${canDec?`退还 ${backCost} 点`:""}">−</button>
-        <button data-stat-inc="${k}" ${canInc?"":"disabled"} title="${v<10?`花费 ${nextCost} 点`:"已达上限"}">＋</button>
+        <button data-stat-dec="${k}" ${canDec?"":"disabled"} title="${canDec?"退还 1 点":""}">−</button>
+        <button data-stat-inc="${k}" ${canInc?"":"disabled"} title="${v<10?"花费 1 点":"已达上限"}">＋</button>
       </div>
-      <div class="stat-cost-hint">${v<10 ? `下一级 −${nextCost}` : "已满级"}</div>
+      <div class="stat-cost-hint">${v<10 ? "每点 −1" : "已满级"}</div>
     </div>`;
   }).join("");
 
@@ -3653,7 +3748,7 @@ function renderStats(){
   <div class="scroll">
     <div class="section-label">第四步 · 属性分配 <span class="idx">04</span></div>
     <div class="budget-line"><span>剩余点数</span><b>${remain}</b></div>
-    <p style="margin-top:-8px;">属性等级越高，每提升一级所需的点数也越多（第2级起依次为 2、3、4…点），所以同样点一次「＋」，高等级属性掉的点数会明显更多——这是设计如此，并非漏洞。</p>
+    <p style="margin-top:-8px;">点一次「＋」加1点，点一次「−」退1点，把手里的点数分配到最想强化的方向上。天赋与投胎方式带来的加成是命运额外给你的底子，不占用这份点数，但也无法通过退点来兑换。</p>
     ${rows}
     <div class="btn-row">
       <button class="btn" id="btn-stat-random">随机分配</button>
@@ -3723,16 +3818,25 @@ function renderEnding(){
     ? `<div class="new-unlock-banner">🏆 本局新解锁成就：${state.newlyUnlockedThisLife.join("、")}</div>`
     : "";
 
+  const masterBadge = hasMetaMilestone("meta_master")
+    ? `<div style="text-align:center; margin-bottom:10px;"><span class="rarity-badge rarity-legendary">✦ 轮回大师 · 已完整经历过100段人生 ✦</span></div>`
+    : "";
+  const metaUnlockHtml = (state.newlyUnlockedMilestones && state.newlyUnlockedMilestones.length)
+    ? `<div class="new-unlock-banner">🌀 局外成长里程碑达成：${state.newlyUnlockedMilestones.map(m=>`「${m.name}」`).join("、")}——${state.newlyUnlockedMilestones.map(m=>m.desc).join(" ")}</div>`
+    : "";
+
   return `
   <div class="scroll">
     <div class="section-label">终章 · 命运定格 <span class="idx">END</span></div>
     ${hiddenBadge}
+    ${masterBadge}
     <div class="ending-title">${title}</div>
     <div class="ending-sub">享年 ${state.age} 岁 · ${state.causeOfEnd}</div>
     <div class="score-box"><div class="score-num">${score}</div><div class="score-label">命运积分</div></div>
     <div style="text-align:center; margin-bottom:14px;">${finalStatsHtml}</div>
     ${achieveHtml}
     ${newUnlockHtml}
+    ${metaUnlockHtml}
     <div class="btn-row center">
       <button class="btn" id="btn-view-lifereview">📜 回顾一生</button>
       <button class="btn" id="btn-view-achievements">🏆 查看成就</button>
@@ -3825,6 +3929,12 @@ function bindEvents(){
       render();
     };
   });
+  if($("#btn-world-reroll")) $("#btn-world-reroll").onclick = ()=>{
+    state.worldviewOptions = drawWorldviews();
+    state.worldview = null;
+    state.worldRerollUsed = true;
+    render();
+  };
   if($("#btn-to-reincarnation")) $("#btn-to-reincarnation").onclick = ()=>{
     state.reincarnationOptions = drawReincarnationOptions(state.worldview.id);
     state.reincarnation = null;
@@ -3865,14 +3975,14 @@ function bindEvents(){
   $$("[data-stat-inc]").forEach(el=>{
     el.onclick = ()=>{
       const k = el.getAttribute("data-stat-inc");
-      const cost = costOf(state.stats[k]+1)-costOf(state.stats[k]);
-      if(state.stats[k]<10 && cost<=remainingBudget()){ state.stats[k]++; render(); }
+      if(state.stats[k]<10 && remainingBudget()>=1){ state.stats[k]++; render(); }
     };
   });
   $$("[data-stat-dec]").forEach(el=>{
     el.onclick = ()=>{
       const k = el.getAttribute("data-stat-dec");
-      if(state.stats[k]>1){ state.stats[k]--; render(); }
+      const floor = state.baseStats ? state.baseStats[k] : 1;
+      if(state.stats[k]>floor){ state.stats[k]--; render(); }
     };
   });
   if($("#btn-stat-random")) $("#btn-stat-random").onclick = ()=>{
@@ -3971,7 +4081,7 @@ function startTalentDraw(){
   prepareRound(0);
 }
 function availableTalentPool(){
-  return TALENTS.filter(t=> !t.world || t.world===state.worldview.id);
+  return TALENTS.filter(t=> (!t.world || t.world===state.worldview.id) && (!t.requiresMeta || hasMetaMilestone(t.requiresMeta)));
 }
 function prepareRound(idx){
   // 已选天赋中若声明了互斥关系（如"男儿身"与"女儿身"），需要把互斥的那一项也从候选池中剔除，
@@ -3983,15 +4093,25 @@ function prepareRound(idx){
 }
 
 function applyTalentAndReincarnationMods(){
-  // reset stats baseline：健康/财富从中等水平起步，其余五维属性从1起步交由天赋与投胎方式决定
+  // 属性分配阶段展示的是纯粹未经加工的起始底子：五维从1开始，健康/财富从中等水平起步。
+  // 投胎方式、命运天赋、以及局外成长带来的加成都先按下不表，等这段人生正式展开时才会真正叠加上去，
+  // 分配阶段自然也就无从得知这些加成具体是多少。
   STAT_KEYS.forEach(k=> state.stats[k] = NEUTRAL_STAT_KEYS.includes(k) ? NEUTRAL_STAT_BASELINE : 1);
+  state.baseStats = Object.assign({}, state.stats);
+}
+
+/* 人生正式开始时才真正叠加的隐藏加成：投胎方式与命运天赋带来的属性加持，
+   以及局外成长解锁的永久幸运——分配阶段选择时看不到具体数值，直到此刻才会真正生效。 */
+function applyHiddenStatBonuses(){
   const rMod = state.reincarnation.mod;
   Object.keys(rMod).forEach(k=> state.stats[k] = Math.max(1, Math.min(10, state.stats[k]+rMod[k])) );
   state.chosenTalents.forEach(t=>{
     Object.keys(t.mod).forEach(k=> state.stats[k] = Math.max(1, Math.min(10, state.stats[k]+t.mod[k])) );
   });
-  state.baseStats = Object.assign({}, state.stats);
-  state.floorCost = STAT_KEYS.reduce((s,k)=>s+costOf(state.baseStats[k]),0);
+  let metaLuckBonus = 0;
+  if(hasMetaMilestone("meta_luck1")) metaLuckBonus += 1;
+  if(hasMetaMilestone("meta_luck2")) metaLuckBonus += 1;
+  if(metaLuckBonus>0) state.stats.luck = Math.max(1, Math.min(10, state.stats.luck+metaLuckBonus));
 }
 
 /* ========================= 逻辑：属性分配 ========================= */
@@ -4003,11 +4123,8 @@ function randomizeStats(){
   while(remain>0 && guard-->0){
     const k = pick(STAT_KEYS);
     if(state.stats[k]>=10) continue;
-    const cost = costOf(state.stats[k]+1)-costOf(state.stats[k]);
-    if(cost<=remain){
-      state.stats[k]++;
-      remain -= cost;
-    }
+    state.stats[k]++;
+    remain -= 1;
     if(STAT_KEYS.every(kk=>state.stats[kk]>=10)) break;
   }
 }
@@ -4041,6 +4158,7 @@ function deathChance(age, ctx){
 }
 
 function startSimulation(){
+  applyHiddenStatBonuses();
   state.log = [];
   state.achievements = [];
   state.newlyUnlockedThisLife = [];
@@ -4291,6 +4409,7 @@ function resolveChoice(optionIdx){
       if(opt.lifespanBonus) state.lifespanBonus += opt.lifespanBonus;
       if(opt.successEffect) applyStatEffect(opt.successEffect, true);
       state.breakthroughCount++;
+      if(opt.worldStateKey) adjustWorldState(opt.worldStateKey, opt.worldStateDelta!==undefined?opt.worldStateDelta:1);
       state.log.push({age:state.age, text:opt.successResult, type:"milestone"});
       if(opt.successAchievement && state.achievements.indexOf(opt.successAchievement)===-1){
         state.achievements.push(opt.successAchievement);
@@ -4401,6 +4520,7 @@ function finishLife(causeOrText){
     state.causeOfEnd = causeOrText;
   }
   checkMetaAchievements();
+  state.newlyUnlockedMilestones = checkMetaMilestones();
   render();
 }
 
@@ -4434,7 +4554,7 @@ const CHOICE_HINT_BY_WORLD = {
   norse:      "诸神的注视 · 命运在此分岔"
 };
 const TITLES_BY_WORLD = {
-  qixiu:      ["凡俗村夫","江湖散修","筑基长老","金丹供奉","元婴真人","半步大罗"],
+  qixiu:      ["江湖散修","筑基长老","金丹供奉","元婴真人","化神天君","半步大罗"],
   magic:      ["平凡村民","街头术士","持证冒险者","王室法师","大魔导师","永恒贤者"],
   scifi:      ["普通居民","边缘拓荒者","合格驾驶员","殖民地精英","舰队统帅","星海之主"],
   warhammer:  ["无名尘埃","边境哨兵","帝国勇士","军团统帅","无畏英灵","帝皇圣裔"],
@@ -4454,7 +4574,12 @@ const TITLES_BY_WORLD = {
    毕竟像"元婴真人"这样的称号，指向的应该是实打实的境界高低，而不是攒了多少个成就。
    隐藏结局与多次成功突破寿元仍然保留为直通最高档的特殊路径，因为那两者本身就代表着
    超越常人修为的真正意义上的"脱凡入圣"。 */
-function computeLifeSummaryTier(){
+function computeLifeSummaryTier(world){
+  if(world === "qixiu"){
+    // 修仙界的称号直接对应实际修炼到的境界——筑基长老就该是真的筑基了，金丹供奉就该是真的凝丹了，
+    // 不再用笼统的属性总和去猜，避免"明明没突破过，称号却显示金丹"这种名不副实的情况。
+    return Math.min(5, worldStateVal(state.ctx, "qixiu_realm"));
+  }
   const statSum = CORE_STAT_KEYS.reduce((s,k)=>s+state.stats[k],0);
   if(state.isHiddenEnding || state.breakthroughCount>=2 || statSum>=55) return 5;
   if(statSum>=40 || state.breakthroughCount>=1) return 4;
@@ -4465,7 +4590,7 @@ function computeLifeSummaryTier(){
 }
 function computeTitle(world){
   const tiers = TITLES_BY_WORLD[world] || TITLES_BY_WORLD.qixiu;
-  return tiers[computeLifeSummaryTier()];
+  return tiers[computeLifeSummaryTier(world)];
 }
 
 /* ========================= 重置 ========================= */
@@ -4480,7 +4605,6 @@ function resetState(){
   state.chosenTalents=[];
   state.stats={power:1,wit:1,charm:1,luck:1,origin:1,health:5,wealth:5};
   state.baseStats=null;
-  state.floorCost=0;
   state.log=[];
   state.age=0;
   state.alive=true;
@@ -4497,6 +4621,8 @@ function resetState(){
   state.worldState=null;
   state.worldsVisitedThisLife=null;
   state.pendingChoice=null;
+  state.newlyUnlockedMilestones=[];
+  state.worldRerollUsed=false;
   if(state.simTimer) clearTimeout(state.simTimer);
 }
 

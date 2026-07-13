@@ -6664,10 +6664,22 @@ function deathChance(age, ctx){
   const baseLife = (WORLD_BASE_LIFESPAN[ctx.world] || [78, 18])[0];
   const span = baseLife + state.lifespanBonus;
   const ratio = age / span;
+  /* 超凡者的衰老曲线：修炼与突破本身就是最好的养生。
+     修仙界以境界(qixiu_realm)计，其余世界以各自的寿命突破层数计——
+     无畏机甲里的老兵、意识数字化的行者、饮过诸神蜜酒的半神……
+     这些已经重塑了存在状态的人，衰老来得更晚（风险爬坡的起点随层数后移），
+     寻常的病痛意外也更难伤到他们（整体风险随层数折减）。
+     这让功成身退的超凡者能够真正活满自己应有的寿数，而不是在漫长
+     岁月里被凡人尺度的意外一点点磨死。 */
+  const realm = ctx.world==="qixiu"
+    ? ((ctx.worldState && ctx.worldState.qixiu_realm) || 0)
+    : ((ctx.worldState && ctx.worldState[ctx.world+"_breakthrough"]) || 0);
+  const agingStart = 0.62 + realm*0.05;
   let base;
   if(age<16) base=0.004;
-  else if(ratio<=0.62) base=0.006;
-  else base = 0.010 + (ratio-0.62)*0.55;
+  else if(ratio<=agingStart) base=0.006;
+  else base = 0.010 + (ratio-agingStart)*0.55;
+  if(realm>0) base *= Math.max(0.25, 1 - realm*0.15);
   const powerLuck = (ctx.stats.power + ctx.stats.luck)/2;
   base *= Math.max(0.25, 1 - (powerLuck-5)*0.06);
   // 健康值同样直接影响意外死亡概率：体弱多病的人更容易遭遇不测，身强体健则更容易化险为夷

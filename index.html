@@ -319,7 +319,8 @@
     margin:14px 0; padding:12px; border:1px solid var(--line); border-radius:10px;
     background:rgba(255,255,255,0.02);
   }
-  .start-qr-box img{ border-radius:6px; background:#fff; padding:6px; }
+  .start-qr-svg{ border-radius:6px; overflow:hidden; line-height:0; }
+  .start-qr-svg svg{ display:block; }
   .start-qr-caption{ font-size:12px; color:var(--text-dim); }
   .meta-progress-line b{ color:var(--gold); }
 
@@ -2979,7 +2980,7 @@ const REINCARNATIONS_BY_WORLD = {
       opening:"你是被遗弃在山间岩洞里的婴儿，身边只有一块刻着模糊符文的兽骨。" },
     { id:"norse_summon", name:"英灵苏醒 · 女武神战士",
       desc:"你在战场的尸骸之间猛然睁眼，一位女武神正俯身审视着你，判断你是否值得被带走。",
-      startAge:16, mod:{power:2, luck:-1},
+      startAge:16, mod:{power:2, luck:-1}, gender:"female",
       opening:"你在战场的尸骸之间猛然睁眼，一位身披铠甲的女武神正俯身审视着你，似乎在判断你是否值得被带走。" },
     { id:"norse_prodigy", name:"先知神童 · 天纵之才",
       desc:"你从小就展现出远超同龄人的预言天赋，部落的贤者都说你是百年难遇的奇才。",
@@ -3227,6 +3228,7 @@ const EVENTS = {
     ], cond:c=>state.age===0}
   ],
   youth: [ // 10-15
+    {text:"集市的角落里，一位风尘仆仆的旅人多看了你两眼，欲言又止，最终只是把一枚不属于任何国度的铜币放在你摊开的掌心里。", weight:2, setFlag:"traveler_met1"},
     {text:"你与班上一个处处针锋相对的同学结下了梁子，两人谁都不服谁，明里暗里较量了好几回合。", weight:5, setFlag:"rival_met"},
     {text:"你无意间发现了一件与自己身世有关的信物，直觉告诉你，这背后藏着不为人知的秘密。", weight:5, setFlag:"secret_lineage"},
     {text:"一场突如其来的灾难降临，你侥幸捡回了一条命，却也因此留下了挥之不去的阴影。", weight:5, setFlag:"disaster_survivor", statEffect:{health:-1,luck:1}},
@@ -3406,6 +3408,8 @@ const EVENTS = {
     {text:"你在路上跟一个热情地跟你打招呼、聊了半天的人告了别，事后才慢慢反应过来——自己压根不记得对方是谁。", weight:5, cond:c=>hasTag(c,"faceblind")}
   ],
   adult: [ // 16-30
+    {choice:true, weight:2, text:"一位说不清来历的老者拦住你，摊开手心——一枚两面都刻着你侧脸的硬币。『赌一把吗？赌注是你的运气。』", options:[{label:"接过硬币，掷", riskyChance:0.5, successResult:"硬币落地，是笑着的那一面。老者抚掌大笑：『命运今天偏爱你。』你只觉得浑身轻快，仿佛连空气都在让路。", successEffect:{luck:2}, failResult:"", failDeathChance:0, regressResult:"硬币落地，是皱眉的那一面。老者叹了口气收起硬币：『改日再来。』那之后你倒霉了整整一个月。", regressEffect:{luck:-1}},{label:"婉拒这场来路不明的赌局", result:"你笑着摇了摇头。老者也不恼，收起硬币走远了——你隐约觉得，看破这场局本身就是一种胜利。", statEffect:{wit:1}}]},
+    {text:"你又遇见了那位旅人。他看着你掌心那枚旧铜币笑了：『还留着呢。』这一次他坐下来陪你喝了杯酒，聊的都是些谁也听不懂的旧事。", weight:14, cond:c=>hasFlag(c,"traveler_met1"), setFlag:"traveler_met2"},
     {text:"当年那个针锋相对的同学如今也小有成就，你们又一次在某个场合针锋相对，谁都不肯让谁。", weight:6, cond:c=>hasFlag(c,"rival_met"), setFlag:"rival_escalated"},
     {text:"你终于查明了当年那件信物背后的真相——你的身世，远比想象中更加不凡。", weight:6, cond:c=>hasFlag(c,"secret_lineage"), setFlag:"lineage_revealed", statEffect:{origin:2}},
     {text:"一个眼神清澈的年轻人执意要拜你为师，软磨硬泡了许久，你最终答应收下了这个徒弟。", weight:5, setFlag:"took_apprentice"},
@@ -3668,6 +3672,8 @@ const EVENTS = {
     {text:"你总能敏锐地察觉到旁人没注意的细节，好几次都靠这份心细，提前避开了明摆着的麻烦。", weight:5, cond:c=>c.gender==="female", statEffect:{wit:1}}
   ],
   prime: [ // 31-50
+    {text:"你在梦里遇见了另一个自己——那个在每一个岔路口都做了相反选择的你。你们相顾无言，末了他笑着说：『放心，我这条路也不坏。』", weight:1, statEffect:{wit:1}},
+    {text:"第三次遇见那位旅人时，他终于开口：『其实我和你一样，也不是这个世界的人。』你们在异乡的星空下聊了整整一夜——原来漂泊的灵魂，从来不止你一个。", weight:14, cond:c=>hasFlag(c,"traveler_met2"), achievement:"同是天涯沦落人", statEffect:{charm:1,luck:1}},
     {text:"你与那位纠缠半生的宿敌最终在一次意外的重逢中握手言和，多年的心结在一笑之间烟消云散。", weight:6, cond:c=>hasFlag(c,"rival_escalated"), achievement:"相逢一笑泯恩仇", statEffect:{charm:1}},
     {text:"你收的徒弟渐渐能够独当一面了，看着他青出于蓝的样子，你心里说不出的欣慰。", weight:6, cond:c=>hasFlag(c,"took_apprentice"), setFlag:"apprentice_grown", statEffect:{charm:1}},
     {text:"当年那场灾难的阴影，终于彻底从你心里散去，你觉得自己是真正地走出来了。", weight:5, cond:c=>hasFlag(c,"disaster_survivor"), statEffect:{health:1}},
@@ -3818,6 +3824,7 @@ const EVENTS = {
     ]}
   ],
   elder: [ // 51-90
+    {text:"某个寻常的午后，你忽然产生了一种奇妙的错觉——仿佛自己走过的这一生，正被什么人一行一行地读着。你对着空气举了举茶杯：无论你是谁，希望这个故事没让你失望。", weight:1, achievement:"戏中人", statEffect:{luck:1}},
     {text:"你想起当年那位不知名的恩师，提笔写下了一本纪念他教诲的书，希望这份师徒情谊能被后人一直记住。", weight:6, cond:c=>hasFlag(c,"mentor_honored"), achievement:"师恩难忘"},
     {choice:true, weight:6, text:"你的徒弟如今已经成了气候，兴冲冲地跑来问你要不要跟他们一起再干一票大的。", cond:c=>hasFlag(c,"apprentice_grown"), options:[
       {label:"欣然同意，再战一场", result:"你欣然同意，宝刀未老地跟着徒弟又干了一票漂亮的，年轻人都对你刮目相看。", statEffect:{power:1}, achievement:"老当益壮"},
@@ -4093,7 +4100,7 @@ const ACHIEVEMENT_CATALOG = [
   {id:"觅得良缘", desc:"与曾经并肩作战的伙伴组建了家庭。", category:"世界成就"},
   {id:"著书立说", desc:"把毕生心得写成了后世的必读教材。", category:"世界成就"},
   {id:"筑基成功", desc:"历经三次雷劫，正式踏入修仙者的行列。", category:"世界成就"},
-  {id:"金丹大成", desc:"在秘境中夺得上古法器，跻身金丹修士。", category:"世界成就"},
+  {id:"秘境夺宝", desc:"在门派秘境中力压群修，夺得一件上古法器。", category:"世界成就"},
   {id:"持证魔法师", desc:"从魔法学院毕业，获得正式的法师资格认证。", category:"世界成就"},
   {id:"边境和事佬", desc:"平息了一场精灵与人类之间的边境冲突。", category:"世界成就"},
   {id:"模拟战冠军", desc:"在模拟战考核中拿到全年级第一。", category:"世界成就"},
@@ -4136,6 +4143,8 @@ const ACHIEVEMENT_CATALOG = [
   {id:"以身献祭", desc:"自愿把身躯献祭给机魂研究，为帝国的未来添了一份力。", category:"世界成就"},
   {id:"执念不灭", desc:"拒绝轮回，执念化作游魂，默默守护着乡土。", category:"世界成就"},
   {id:"突破天命", desc:"在生死一线间成功突破了寿命的枷锁，硬生生续了命。", category:"世界成就"},
+  {id:"二度超脱", desc:"在同一个世界里两次突破寿命的极限，彻底走到了凡俗生命的彼岸。", category:"世界成就"},
+  {id:"毕生所求", desc:"用一整段人生追逐一个宏愿，并在垂暮之年亲手将它实现。", category:"世界成就"},
   {id:"强行筑基", desc:"拼死一搏，冒险筑基成功，寿元随之增长。", category:"世界成就"},
   {id:"金丹圆满", desc:"凝结金丹，寿元大幅增长，修为今非昔比。", category:"世界成就"},
   {id:"元婴大成", desc:"凝结元婴，跨过了凡俗与长生之间的分水岭。", category:"世界成就"},
@@ -4181,7 +4190,13 @@ const ACHIEVEMENT_CATALOG = [
   {id:"灵魂本源共鸣", desc:"同时拥有「双生灵魂」与「神谕先知」两种天赋，仿佛冥冥中早有联系。", category:"隐藏成就", hidden:true,
    teaser:"或许和某两个天赋之间微妙的联系有关……"},
   {id:"虽败犹荣", desc:"命运积分不到30分，却依然在这一局里收获了至少一项人生成就。", category:"隐藏成就", hidden:true,
-   teaser:"就算过得不算风光，好像也不是一无所获……"}
+   teaser:"就算过得不算风光，好像也不是一无所获……"},
+  {id:"位面裂隙", desc:"在一个世界里，瞥见了另一个世界确实存在的痕迹。", category:"隐藏成就", hidden:true,
+   teaser:"世界与世界之间，好像并非全无缝隙……"},
+  {id:"戏中人", desc:"某个恍惚的瞬间，你意识到自己的人生正被谁一行一行地读着。", category:"隐藏成就", hidden:true,
+   teaser:"你有没有过被注视着的错觉……"},
+  {id:"同是天涯沦落人", desc:"三次偶遇之后，终于认出了那位同样来自异乡的旅人。", category:"隐藏成就", hidden:true,
+   teaser:"有些相遇，似乎不止一次……"}
 ];
 
 /* 世界观专属事件：每个世界观在每个人生阶段各有一条特色事件，穿插进对应阶段的事件池 */
@@ -4225,6 +4240,9 @@ const WORLD_EVENTS = {
       {text:"你自幼在宗门中长大，对门内规矩比旁人更加熟稔，处理起杂务也得心应手。", weight:6, cond:c=>hasFlag(c,"qixiu_temple_raised"), statEffect:{wit:1}}
     ],
     adult:[
+      {text:"你在一处坍塌的上古洞府里得到半张残缺的炼器图谱——图上那件『本命法宝』的构思之精妙，让你从此念念不忘。", weight:5, setFlag:"qixiu_quest1"},
+      {choice:true, weight:6, text:"一名被逐出师门的落魄弟子跪在你洞府外三天三夜，求你收留。", options:[{label:"收入门下，悉心教导", result:"你把他收入了门下，虽然资质平平，胜在心性坚韧，倒也教得省心。", statEffect:{charm:1}, setFlag:"qixiu_disciple"},{label:"指点几句，赠资送走", result:"你指点了他几句修行的关窍，又赠了些盘缠送他下山，算是结了个善缘。", statEffect:{wit:1}},{label:"闭门不见", result:"你闭门不见，三日后他自行离去——修行路上，各有各的缘法。", statEffect:{luck:1}}]},
+      {text:"你在坊市里淘到了一枚品相极佳的聚灵石，镶在洞府的阵眼上，连修炼的速度都快了几分。", weight:6},
       {text:"你历经三次雷劫依然屹立不倒，成功筑基，正式踏入了修仙者的行列。", weight:10, achievement:"筑基成功"},
       {text:"你在一次宗门秘境的历练中力压群雄夺得头筹，声名很快传遍了附近几个宗门。", weight:8, cond:c=>stat(c,"power")>=7},
       {text:"一位神秘老祖只用寥寥数语便点醒了你的修炼瓶颈，你隐隐觉得冥冥中自有天意眷顾。", weight:6, cond:c=>hasTag(c,"chosen")},
@@ -4262,7 +4280,10 @@ const WORLD_EVENTS = {
       ]}
     ],
     prime:[
-      {text:"你在一次门派秘境探索中夺得一件上古法器，实力再进一步，跻身金丹修士之列。", weight:10, achievement:"金丹大成"},
+      {text:"为了凑齐图谱上的天材地宝，你走遍了七州三海：陨铁、心火、千年寒髓……如今万事俱备，只欠祭炼。", weight:12, cond:c=>hasFlag(c,"qixiu_quest1"), setFlag:"qixiu_quest2"},
+      {text:"你在一处塌方的山腹里发现了一具锈蚀的巨大铁人残骸，其内构造之精密远超凡俗工匠的想象——它仿佛来自一个完全不同的世界。", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
+      {choice:true, weight:6, text:"你终于攒够了开辟自己洞府的资粮，只是选址颇费思量。", options:[{label:"筑在灵脉之上", result:"你把洞府筑在了一条灵脉之上，修炼事半功倍，只是树大招风，往后少不了要应付觊觎之人。", statEffect:{power:1}},{label:"藏于深山无名处", result:"你把洞府藏进了深山无名之处，清净自在，倒也落得逍遥。", statEffect:{luck:1}},{label:"安在坊市之侧", result:"你把洞府安在了坊市之侧，消息灵通、买卖便利，人脉与家底都厚了几分。", statEffect:{charm:1,wealth:1}}]},
+      {text:"你在一次门派秘境探索中力压群修，夺得一件上古法器——凭借此宝，你的实力大涨，名动一方。", weight:10, achievement:"秘境夺宝", statEffect:{power:1,luck:1}},
       {text:"你执掌门中长老之位，门下弟子云集，俨然成了这方修仙盛派的中流砥柱。", weight:8, cond:c=>stat(c,"origin")>=7},
       {text:"你游历三千大千世界，在一场量劫之中助本命宗门渡过了灭顶之灾，声望一时无两。", weight:7},
       {text:"你受邀参加了百年一次的诸派论剑大会，与各大宗门的顶尖高手过招，虽未夺魁，却也扬名一方。", weight:6, cond:c=>hasTag(c,"swordsman")},
@@ -4297,6 +4318,10 @@ const WORLD_EVENTS = {
       ]}
     ],
     elder:[
+      {choice:true, weight:14, text:"闭关祭炼本命法宝的最后一步到了——以自身精血温养器胚，成则器灵觉醒与你性命相连，败则精血反噬。", cond:c=>hasFlag(c,"qixiu_quest2"), options:[{label:"以精血祭炼，唤醒器灵", riskyChance:0.4, lifespanBonus:15, successEffect:{power:3,wit:2,luck:2}, successResult:"器胚中传来一声清鸣，一缕稚嫩的器灵意识与你的心神紧紧相连——毕生所求，今日功成。这件本命法宝从此与你同修共长。", successAchievement:"毕生所求", failResult:"精血反噬的那一刻，器胚轰然炸裂，你的心神随之俱碎。", failDeath:true, failDeathChance:0.30, failCause:"炼器反噬", regressResult:"祭炼在最后关头失控，器胚化作齑粉，你呕血倒地——数十年心血毁于一旦，好在命还在。", regressEffect:{health:-2,wit:-1}},{label:"封存器胚，传于后人", result:"你终究没有下定决心以命相搏，把器胚与图谱一同封存，留待有缘的后人——也算是另一种传承。", statEffect:{wit:1,charm:1}}]},
+      {text:"你在洞府后山种的灵茶终于到了采摘的年头，用山泉煮上一壶，茶香能飘满整个山谷。", weight:6},
+      {text:"当年收留的那名落魄弟子如今已是一方大能，逢年过节都会亲自登门拜望，同道无不称羡你有识人之明。", weight:6, cond:c=>hasFlag(c,"qixiu_disciple"), statEffect:{charm:1}},
+      {text:"你闭关时无意间引来了一场罕见的灵雨，方圆百里的草木一夜之间灵气盎然，同道都说你福缘深厚。", weight:6, cond:c=>stat(c,"luck")>=8, statEffect:{health:1}},
       {text:"你于山巅盘膝而坐，感悟天地大道，肉身与灵魂在漫天雷劫中一同蜕变、升华。", weight:10},
       {text:"你将毕生功法尽数传于座下弟子，随后飘然远游，从此再未在这方世界现身。", weight:8},
       {text:"你以肉身之躯硬撼天道法则，最终突破至虚无缥缈、寻常修士穷尽一生都难以企及的大乘之境。", weight:6},
@@ -4356,11 +4381,12 @@ const WORLD_EVENTS = {
       ], cond:c=>state.age<=1}
     ],
     youth:[
+      {text:"你在魔药课上把一锅治疗药剂熬成了会唱歌的粘液，教授哭笑不得地给了你一个『创意分』。", weight:6},
       {text:"你收到了梦寐以求的魔法学院录取通知书，怀揣忐忑与期待踏上了前往学院的马车。", weight:10},
       {text:"你在入学考试中独自破解了一道困扰教授们多年的古代符文谜题，一时间名声大噪。", weight:8, cond:c=>stat(c,"wit")>=7},
       {text:"你在图书馆的角落里结识了一位沉默寡言的同学，两人一见如故，很快成了形影不离的搭档。", weight:8},
       {text:"你在魔法学院的元素亲和测试中，罕见地对两种以上元素都展现出了不俗的天赋。", weight:7},
-      {text:"你误闯进学院禁地，撞见了一场秘密的魔法契约仪式，从此对『契约魔法』产生了浓厚的兴趣。", weight:6},
+      {text:"你误闯进学院禁地，撞见了一场秘密的魔法契约仪式，从此对『契约魔法』产生了浓厚的兴趣。", weight:6, setFlag:"magic_contract_interest"},
       {text:"你在野外课程中救下了一头受伤的幼龙，对方虽不能言语，眼神里却满是依恋。", weight:6, setFlag:"magic_dragon_youth"},
       {choice:true, weight:6, text:"魔法学院的教务处让你选择主修方向：元素系、召唤系还是附魔系，这将决定你往后的法术道路。", options:[
         {label:"元素系，锋芒毕露", result:"你选择了元素系，从此法术锋芒毕露，威力惊人。", statEffect:{power:2}},
@@ -4369,11 +4395,14 @@ const WORLD_EVENTS = {
       ]},
       {text:"你在校内的元素控制课上不慎引发了小规模的失控，虽然吓坏了同学，却也因此摸清了自己的能力上限。", weight:6},
       {text:"你参加了学院间的魔法竞技赛，虽然首战失利，却也从此结识了一群志同道合的对手。", weight:6},
-      {text:"你参加了学院组织的魔法竞拍会，误打误撞拍下了一件连教授都没能认出的神秘法器。", weight:6},
+      {text:"你参加了学院组织的魔法竞拍会，误打误撞拍下了一件连教授都没能认出的神秘法器。", weight:6, setFlag:"magic_mystery_artifact"},
       {text:"你被选为学院禁书库的临时守护者，负责看管那些不能轻易示人的危险典籍。", weight:6},
       {text:"你自幼跟着精灵法师游历四方，见识远比同龄人更广，谈吐间总带着几分从容气度。", weight:6, cond:c=>hasFlag(c,"magic_elf_raised"), statEffect:{charm:1}}
     ],
     adult:[
+      {text:"你在一本残破的古籍里读到一段被官方魔法史刻意抹去的记载——传说中失落的『第九系魔法』，据说它连接着魔法最初的本源。", weight:5, setFlag:"magic_quest1"},
+      {choice:true, weight:6, text:"一本会说话的魔导书从拍卖行逃了出来，躲进你的书房请求收留。", options:[{label:"收留它做研究伙伴", result:"你收留了这本聒噪却博学的魔导书，书房从此再没安静过，你的研究却也快了不少。", statEffect:{wit:1}, setFlag:"magic_talkingbook"},{label:"送它去学院图书馆", result:"你把它送去了学院图书馆，那里有它最爱的同类，临别时它给你留了一页藏书密录作谢礼。", statEffect:{charm:1}},{label:"婉言请它另寻高明", result:"你婉言请它另寻高明——一本会半夜念诗的书，实在不适合你的作息。", statEffect:{luck:1}}]},
+      {choice:true, weight:6, text:"到了缔结使魔契约的年纪，三只候选的魔物在你面前各显神通。", options:[{label:"选择火蜥蜴", result:"你与一只脾气火爆的火蜥蜴缔结了契约，它总嫌你施法太慢，倒也逼着你的战斗法术突飞猛进。", statEffect:{power:1}},{label:"选择夜枭", result:"你与一只博闻强识的夜枭缔结了契约，它陪你熬过了无数个啃书的深夜。", statEffect:{wit:1}},{label:"选择幻猫", result:"你与一只慵懒的幻猫缔结了契约，它最擅长在你social的场合悄悄替你撑场面。", statEffect:{charm:1}}]},
       {text:"你在毕业典礼上正式获得了「持证魔法师」的资格认证，胸前别上了属于自己的法师徽章。", weight:10, achievement:"持证魔法师"},
       {text:"你只身一人平定了边境城镇的一场魔物暴乱，从此被当地居民亲切地称为「守护者」。", weight:8, cond:c=>stat(c,"power")>=7},
       {text:"你与一位圣骑士并肩作战，击退了一群企图渗透王城的魔王军谍报人员。", weight:6},
@@ -4400,6 +4429,10 @@ const WORLD_EVENTS = {
       ]}
     ],
     prime:[
+      {text:"循着古籍的线索，你花了半生走访遗迹、破译铭文，终于拼凑出了第九系魔法的完整咒式——只差最后一次实际验证。", weight:12, cond:c=>hasFlag(c,"magic_quest1"), setFlag:"magic_quest2"},
+      {text:"深夜的观星塔上，你看见一颗流星拖着诡异的规则轨迹坠向远方——落点处没有火光，只有一圈短暂亮起的、精确得可怕的蓝色光环。", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
+      {text:"你在一次学术辩论中当众推翻了一条沿用百年的魔法定律，大陆的魔法期刊连载了整整三期你的论证。", weight:6, cond:c=>stat(c,"wit")>=8, statEffect:{wit:1}},
+      {text:"当年在禁地撞见的那场契约仪式始终萦绕在你心头，多年钻研之后，你终于复原了那门失传的高阶契约术，在契约魔法一脉声名鹊起。", weight:6, cond:c=>hasFlag(c,"magic_contract_interest"), statEffect:{wit:1}},
       {text:"你受王国委托前往边境平息了一场精灵与人类之间的冲突，声望在大陆上迅速传开。", weight:10, achievement:"边境和事佬"},
       {text:"王室正式册封你为宫廷魔导师，从此你的名字被郑重地载入了王国的编年史册。", weight:8, cond:c=>hasTag(c,"royalmagic")},
       {text:"你受邀主持了一届魔法学院的毕业典礼，看着台下满怀憧憬的新人，恍惚看到了当年懵懂的自己。", weight:7},
@@ -4422,6 +4455,11 @@ const WORLD_EVENTS = {
       {text:"你培育的元素精灵终于完全成熟，成了整片大陆罕见的稀有生灵，各方都想一睹真容。", weight:6, cond:c=>hasFlag(c,"magic_elemental_spirit")}
     ],
     elder:[
+      {choice:true, weight:14, text:"第九系魔法的完整咒式就摊在面前——念出它，你将成为千年来第一个触及魔法本源的人，或者成为下一个被历史抹去的名字。", cond:c=>hasFlag(c,"magic_quest2"), options:[{label:"念出失落的咒式", riskyChance:0.4, lifespanBonus:15, successEffect:{wit:4,charm:2}, successResult:"咒式生效的瞬间，整片大陆的魔力潮汐为之一滞——你成功了。教科书从此要为你新增一个章节：第九系魔法，重现于世。", successAchievement:"毕生所求", failResult:"咒式失控的魔力洪流吞没了你——正如千年前那些被抹去的名字一样。", failDeath:true, failDeathChance:0.30, failCause:"咒式反噬", regressResult:"咒式在最后一个音节上崩溃了，反冲的魔力重创了你的魔力回路——你保住了命，却再也无力重试。", regressEffect:{wit:-2,health:-1}},{label:"封存研究，匿名发表", result:"你把毕生研究匿名投给了魔法学会——让更年轻、更有天赋的人去走完最后一步吧。", statEffect:{wit:1,charm:1}}]},
+      {choice:true, weight:30, repeatable:true, text:"第一次回春之后，你在禁忌法典的最后一页发现了真正的终极之法——『贤者化身』：把自身的存在彻底转写进大陆的魔网之中，与魔法本源同寿。", cond:c=>worldStateVal(c,"magic_breakthrough")===1 && state.age>=(hasTag(c,"transcendent")?58:64) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?3:5)), options:[{label:"尝试贤者化身", riskyChance:0.15, lifespanBonus:60, successEffect:{wit:3,luck:2}, successResult:"转写成功——你的意识与大陆魔网融为一体，从此四海八荒有魔法处，皆是你的耳目，寿元更是与魔网同流。", successAchievement:"二度超脱", worldStateKey:"magic_breakthrough", worldStateDelta:1, failResult:"转写进行到一半，你的存在被魔网的洪流彻底冲散，世间再无你这个人存在过的痕迹。", failDeath:true, failDeathChance:0.55, failCause:"存在消散", regressResult:"转写中途失控，你侥幸把自己从魔网里拽了回来，只是灵魂已经磨损得厉害。", regressEffect:{wit:-3,charm:-2}, regressLifespanPenalty:25},{label:"不再冒险，安享余生", result:"你决定不再挑战命运的极限，安然接受岁月本来的模样。", statEffect:{luck:1}}]},
+      {text:"你晚年最大的乐趣，是坐在学院门口的长椅上，看新生们第一次施法把自己头发烧焦的样子。", weight:6},
+      {text:"那本会说话的魔导书陪了你大半辈子，如今它记满了你们共同的研究成果，学界称之为『双作者奇书』。", weight:6, cond:c=>hasFlag(c,"magic_talkingbook"), statEffect:{wit:1}},
+      {text:"你晚年终于鉴定出了当年拍下的那件神秘法器的来历——那竟是初代贤者的遗物，消息一出，整个大陆的收藏界都为之震动。", weight:6, cond:c=>hasFlag(c,"magic_mystery_artifact"), statEffect:{wealth:1,luck:1}},
       {text:"你将自己毕生钻研的魔法奥秘编纂成书，郑重地存放进了魔法学院的禁书阁，供后人瞻仰。", weight:10},
       {text:"你在魔法塔顶层设立了一处静谧的观星台，晚年常在此地推演星辰运转与魔法本源之间的关联。", weight:8},
       {text:"你收养多年的幼龙如今已经长大，临别前依依不舍地用龙语向你道别。", weight:6, cond:c=>hasFlag(c,"magic_dragon_bond")},
@@ -4430,10 +4468,10 @@ const WORLD_EVENTS = {
       {text:"你晚年时常受邀参加各地的魔法交流会，虽然行动不便，讲起理论来依然神采奕奕。", weight:6},
       {text:"你把自己收藏多年的稀有法器悉数捐赠给了魔法学院的展览馆，供后人瞻仰学习。", weight:6},
       {text:"你与陪伴多年的元素精灵一同看过了大陆上的四季变换，如今终于要一同安然谢幕。", weight:6, cond:c=>hasFlag(c,"magic_elemental_spirit")},
-      {choice:true, weight:5, repeatable:true, text:"你翻出了一本记载着回春仪式的禁忌法典，这个仪式或许能让你脱离凡人的寿命枷锁——但代价同样凶险。", cond:c=>state.age>=(hasTag(c,"transcendent")?50:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
-        {label:"拼死施展回春仪式", riskyChance:0.25, lifespanBonus:20, successEffect:{wit:10,charm:4,health:2},
-         successResult:"仪式在生死一线间成功了，你的身体重新焕发出年轻的活力，魔力也随之澎湃起来，寿命的枷锁被硬生生打开了一道缝。", successAchievement:"突破天命",
-         failResult:"仪式失控，魔力反噬瞬间席卷了你的全身，你甚至没能来得及喊出一声。", failDeath:true, failDeathChance:0.6, failCause:"仪式失控",
+      {choice:true, weight:5, repeatable:true, text:"你翻出了一本记载着回春仪式的禁忌法典，这个仪式或许能让你脱离凡人的寿命枷锁——但代价同样凶险。", cond:c=>state.age>=(hasTag(c,"transcendent")?51:56) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?8:12)), options:[
+        {label:"拼死施展回春仪式", riskyChance:0.3, lifespanBonus:45, successEffect:{wit:10,charm:4,health:2},
+         successResult:"仪式在生死一线间成功了，你的身体重新焕发出年轻的活力，魔力也随之澎湃起来，寿命的枷锁被硬生生打开了一道缝。", successAchievement:"突破天命", worldStateKey:"magic_breakthrough", worldStateDelta:1,
+         failResult:"仪式失控，魔力反噬瞬间席卷了你的全身，你甚至没能来得及喊出一声。", failDeath:true, failDeathChance:0.55, failCause:"仪式失控",
          regressResult:"仪式失控，魔力反噬狂潮席卷全身，你侥幸没有当场殒命，法力却因此大损，许多咒语都要重新学起。", regressEffect:{wit:-2,charm:-1,health:-1}, regressLifespanPenalty:5},
         {label:"稳妥施展基础回春咒", riskyChance:0.75, lifespanBonus:8,
          successResult:"你只施展了基础的回春咒，效果有限，却也让你的身子骨多撑了几年。",
@@ -4445,8 +4483,8 @@ const WORLD_EVENTS = {
         {label:"选择最勤奋踏实的学生", result:"你选择了那位最勤奋踏实的学生，对方虽不算最有天赋，却把你的研究稳稳地延续了下去。", statEffect:{wealth:1,charm:1}},
         {label:"谁都不选，把研究成果公开给所有人", result:"你谁都没有指定，而是把毕生的研究成果毫无保留地公开给了所有人，此举在学界引起了不小的震动。", statEffect:{charm:2}, achievement:"广播智慧"}
       ]},
-      {death:true, text:"回春仪式留下的隐患终于在某个寻常的日子爆发，法力如潮水般从你体内彻底流逝，你的生命也随之凋零。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"法力枯竭"},
-      {text:"突破之后，你对魔法本源的理解已经超越了寻常法师的认知，随口一个手势都暗合精妙的法则。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"wit")>=8},
+      {death:true, text:"回春仪式留下的隐患终于在某个寻常的日子爆发，法力如潮水般从你体内彻底流逝，你的生命也随之凋零。", weight:1, cond:c=>worldStateVal(c,"magic_breakthrough")>=1, cause:"法力枯竭"},
+      {text:"突破之后，你对魔法本源的理解已经超越了寻常法师的认知，随口一个手势都暗合精妙的法则。", weight:6, cond:c=>worldStateVal(c,"magic_breakthrough")>=1 && stat(c,"wit")>=8},
       {text:"这些年魔法教育向平民敞开了大门，你亲眼见证了这个王国因此涌现出了多少出身寒微却才华横溢的法师。", weight:6, cond:c=>worldStateVal(c,"magic_kingdomInfluence")>=2},
       {text:"魔法教育依旧被贵族垄断，你看着一个个有天赋的平民孩子被拒之门外，心里明白，这个王国的魔法界终究还是固步自封了。", weight:6, cond:c=>worldStateVal(c,"magic_kingdomInfluence")<=-1}
     ]
@@ -4470,12 +4508,13 @@ const WORLD_EVENTS = {
       ]}
     ],
     youth:[
+      {choice:true, weight:6, text:"基础学院的选修季到了，三个热门方向都向你敞开了大门。", options:[{label:"主修舰船工程", result:"你选择了舰船工程，整日泡在机库里与引擎为伴，动手能力突飞猛进。", statEffect:{wit:1}},{label:"主修外星生态", result:"你选择了外星生态，那些光怪陆离的异星生命让你对宇宙多了几分敬畏与好运。", statEffect:{luck:1}},{label:"主修星际外交", result:"你选择了星际外交，学会了在谈判桌上不动声色地掌控节奏。", statEffect:{charm:1}}]},
       {text:"你在基础学院的模拟战考核中，操控教学机甲一举拿到了全年级第一。", weight:10, achievement:"模拟战冠军"},
       {text:"你在格斗训练营里连续击败了所有高年级学员，教官破格让你提前参加了实战考核。", weight:8, cond:c=>stat(c,"power")>=7},
       {text:"你偷偷改装了教学机甲的核心程序，虽然当场被抓了个正着，却也因此被科研部门的人暗中看中。", weight:7},
       {text:"你在殖民地的青少年编程大赛中，独自写出了一套让所有评委都看不懂的算法。", weight:6},
       {text:"你结识了一个被人类遗弃的旧型号AI，把它偷偷修好后，它成了你形影不离的伙伴。", weight:6},
-      {text:"你在一次校外实习中意外触碰到了一处外星遗迹的边缘，从此对那种未知的科技产生了执念。", weight:6},
+      {text:"你在一次校外实习中意外触碰到了一处外星遗迹的边缘，从此对那种未知的科技产生了执念。", weight:6, setFlag:"scifi_relic_obsession"},
       {choice:true, weight:6, text:"殖民地议会让你选择加入哪个专业序列：机甲驾驶、深空探索还是基因工程，这将决定你的职业轨道。", options:[
         {label:"机甲驾驶序列", result:"你选择了机甲驾驶序列，从此在战斗一线积累经验。", statEffect:{power:2}},
         {label:"深空探索序列", result:"你选择了深空探索序列，往后的日子里总要与未知打交道。", statEffect:{luck:2}},
@@ -4489,6 +4528,9 @@ const WORLD_EVENTS = {
       {text:"你发现殖民地的克隆技术档案里，有一份关于你自己的加密备份记录，内容却无法读取。", weight:6, setFlag:"scifi_clone_mystery"}
     ],
     adult:[
+      {text:"你在整理深空监听数据时发现了一段规律得不可思议的信号——它来自一片星图上标注为『空无一物』的深空，像一座灯塔在呼唤。", weight:5, setFlag:"scifi_quest1"},
+      {choice:true, weight:6, text:"舰队在深空打捞到一枚来历不明的休眠舱，生命体征微弱但稳定，处置权在你手上。", options:[{label:"唤醒沉睡者", result:"你下令唤醒了舱内的沉睡者——那是一位来自数百年前的旧时代工程师，他看着舷窗外的星图沉默了很久。", statEffect:{luck:1}, setFlag:"scifi_sleeper"},{label:"移交总督府处理", result:"你把休眠舱完整移交给了总督府，程序合规，各方都挑不出错。", statEffect:{origin:1}},{label:"原样放回深空", result:"你思虑再三，让休眠舱按原轨道继续漂流——有些沉睡，或许本就不该被打扰。", statEffect:{wit:1}}]},
+      {text:"你在漫长的星际航行中养成了侍弄舱内水培植物的习惯，那一小片绿色成了全舰最受欢迎的角落。", weight:6},
       {text:"你正式获得殖民地颁发的机甲驾驶执照，驾驶着属于自己的第一台量产型机甲奔赴前线。", weight:10, achievement:"机甲驾驶员"},
       {text:"你破解了一段来自深空的神秘信号，为整个殖民地争取到了极其宝贵的预警时间。", weight:8, cond:c=>stat(c,"wit")>=7},
       {text:"殖民地爆发了一场小规模的资源分配叛乱，你被夹在了管理层与普通居民之间，左右为难。", weight:6},
@@ -4511,6 +4553,10 @@ const WORLD_EVENTS = {
       {text:"你终于破解了那份克隆备份记录，其中的内容暗示殖民地高层似乎一直在暗中监控着你的成长。", weight:6, cond:c=>hasFlag(c,"scifi_clone_mystery"), setFlag:"scifi_clone_revealed"}
     ],
     prime:[
+      {text:"半生的破译让信标的坐标终于清晰——那是一座前文明留下的深空设施，官方拒绝立项，你便自己攒了一艘船。", weight:12, cond:c=>hasFlag(c,"scifi_quest1"), setFlag:"scifi_quest2"},
+      {text:"例行勘探时，你在一颗荒芜行星的岩层深处发现了一枚温润的玉简，扫描显示它的分子结构会缓慢地自我修复——舰上的科学家们集体沉默了。", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
+      {text:"总督府邀请你进入殖民地最高决策圈列席，你的每一次发言都开始真切地影响着数百万人的生活。", weight:6, cond:c=>stat(c,"origin")>=7, statEffect:{origin:1}},
+      {text:"你带队重返了年少时触碰过的那处外星遗迹，这一次，你们成功破译了遗迹核心的一小段技术图纸，震动了整个殖民地科学界。", weight:6, cond:c=>hasFlag(c,"scifi_relic_obsession"), statEffect:{wit:2}},
       {text:"你主导了一次跨星系的殖民地救援行动，成功阻止了一场即将爆发的资源战争。", weight:10, achievement:"星际救援英雄"},
       {text:"你的基因样本被列为殖民地的保护资产，无数科研机构都争相想要研究你身上的秘密。", weight:8, cond:c=>hasTag(c,"genemod")},
       {text:"你主持设计了新一代殖民舰的核心引擎，让人类探索的脚步得以踏向更加遥远的星域。", weight:7},
@@ -4543,6 +4589,10 @@ const WORLD_EVENTS = {
       ]}
     ],
     elder:[
+      {choice:true, weight:14, text:"自购的老旧星舰已经停在发射架上，深空信标的坐标输入完毕——这一去，或是见证前文明的遗产，或是有去无回。", cond:c=>hasFlag(c,"scifi_quest2"), options:[{label:"启航，奔赴深空信标", riskyChance:0.42, lifespanBonus:15, successEffect:{wit:3,luck:2,origin:2}, successResult:"穿过最后一段虚空，那座巨大的前文明环形设施在舷窗外缓缓展开——你成了第一个亲眼见证它的人类，你的名字从此写进了星图。", successAchievement:"毕生所求", failResult:"星舰在最后一次跃迁中失联，搜救队只找到了一段平静的告别录音：『值得。』", failDeath:true, failDeathChance:0.30, failCause:"深空失联", regressResult:"星舰在半途发生致命故障，你被救援队拖了回来——船毁了，积蓄空了，坐标数据也在事故中损毁大半。", regressEffect:{wealth:-2,health:-1}},{label:"把坐标公开给科学界", result:"你把完整坐标无偿公开——三年后，官方舰队抵达信标，直播画面里，你在人群中看着，眼里有光也有泪。", statEffect:{charm:2}}]},
+      {choice:true, weight:30, repeatable:true, text:"第一次改造多年后，医疗舱推送了一份绝密方案——『完全体计划』：以纳米集群彻底重构全身细胞，理论上可以再次大幅延缓死亡。", cond:c=>worldStateVal(c,"scifi_breakthrough")===1 && state.age>=(hasTag(c,"transcendent")?54:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?3:5)), options:[{label:"接受完全体改造", riskyChance:0.2, lifespanBonus:50, successEffect:{power:3,health:3}, successResult:"重构成功——你的身体如今由亿万纳米单元协同维系，衰老对你而言成了一个可以调节的参数。", successAchievement:"二度超脱", worldStateKey:"scifi_breakthrough", worldStateDelta:1, failResult:"纳米集群在重构中途集体失控，你的身体在数分钟内彻底解体。", failDeath:true, failDeathChance:0.5, failCause:"重构崩溃", regressResult:"重构中途被紧急中止，你保住了性命，但身体留下了大片无法修复的机能损伤。", regressEffect:{health:-3,power:-2}, regressLifespanPenalty:20},{label:"不再冒险，安享余生", result:"你决定不再挑战命运的极限，安然接受岁月本来的模样。", statEffect:{luck:1}}]},
+      {text:"你退休后领养了一台退役的护理机器人，它做菜的手艺随着系统更新越来越好，你们都默契地不提它当年差点把厨房烧了的事。", weight:6},
+      {text:"当年被你唤醒的那位旧时代沉睡者，如今成了连接两个时代的活历史，你们的忘年对谈被整理成了畅销全星域的口述史。", weight:6, cond:c=>hasFlag(c,"scifi_sleeper"), statEffect:{charm:1}},
       {text:"你的意识在临终前被完整上传进了星际网络，从此以数据的形式在星海之间永远存在。", weight:10},
       {text:"你在退役仪式上把毕生的航行日志上传进了公共数据库，供后来的星际旅人查阅参考。", weight:8},
       {text:"你把陪伴多年的AI伙伴的核心程序备份了下来，希望它能以某种形式继续存在下去。", weight:6},
@@ -4551,14 +4601,14 @@ const WORLD_EVENTS = {
       {text:"你在退休前最后一次登上了那支曾经服役过的舰队，看着崭新的舰体，恍惚间百感交集。", weight:6},
       {text:"你把自己参选、任职殖民地议会的这段经历写成了回忆录，希望能给后来者一些参考。", weight:6},
       {text:"你与那个觉醒的AI成了跨越种族的忘年之交，两人时常一起讨论关于『存在』的哲学问题。", weight:6, cond:c=>hasFlag(c,"scifi_ai_awakening")},
-      {choice:true, weight:5, repeatable:true, text:"医疗舱提出了两套截然不同的延寿方案——一套是极限基因重构手术，另一套是接入舰队集体意识网络进行思维突破，理论上都能大幅延长你的寿命，但风险同样极高。", cond:c=>state.age>=(hasTag(c,"transcendent")?50:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
-        {label:"冒险接受完整基因重构手术", riskyChance:0.25, lifespanBonus:20, successEffect:{power:10,health:4,wit:2},
-         successResult:"手术在生死边缘完成了，你的基因序列被彻底重构，衰老的进程被硬生生按下了暂停键，身体机能也远超从前。", successAchievement:"突破天命",
-         failResult:"手术中途突发严重并发症，医疗舱来不及做出任何反应，生命体征归零。", failDeath:true, failDeathChance:0.6, failCause:"手术失败",
+      {choice:true, weight:5, repeatable:true, text:"医疗舱提出了两套截然不同的延寿方案——一套是极限基因重构手术，另一套是接入舰队集体意识网络进行思维突破，理论上都能大幅延长你的寿命，但风险同样极高。", cond:c=>state.age>=(hasTag(c,"transcendent")?51:52) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?7:10)), options:[
+        {label:"冒险接受完整基因重构手术", riskyChance:0.4, lifespanBonus:35, successEffect:{power:10,health:4,wit:2},
+         successResult:"手术在生死边缘完成了，你的基因序列被彻底重构，衰老的进程被硬生生按下了暂停键，身体机能也远超从前。", successAchievement:"突破天命", worldStateKey:"scifi_breakthrough", worldStateDelta:1,
+         failResult:"手术中途突发严重并发症，医疗舱来不及做出任何反应，生命体征归零。", failDeath:true, failDeathChance:0.5, failCause:"手术失败",
          regressResult:"手术中途突发严重并发症，医疗舱勉强把你从死亡边缘拉了回来，只是这具身体因此留下了永久的损伤。", regressEffect:{power:-2,health:-2}, regressLifespanPenalty:5},
-        {label:"接入舰队意识网络，尝试思维突破", riskyChance:0.25, lifespanBonus:20, successEffect:{wit:10,luck:4,charm:2},
-         successResult:"你的意识与舰队AI网络彻底融合，实现了真正意义上的思维突破，从此你的存在不再局限于单一的躯壳。", successAchievement:"突破天命",
-         failResult:"思维融合的过程中，你的意识彻底迷失在了庞大的数据洪流之中，再未归来。", failDeath:true, failDeathChance:0.6, failCause:"思维湮灭",
+        {label:"接入舰队意识网络，尝试思维突破", riskyChance:0.4, lifespanBonus:35, successEffect:{wit:10,luck:4,charm:2},
+         successResult:"你的意识与舰队AI网络彻底融合，实现了真正意义上的思维突破，从此你的存在不再局限于单一的躯壳。", successAchievement:"突破天命", worldStateKey:"scifi_breakthrough", worldStateDelta:1,
+         failResult:"思维融合的过程中，你的意识彻底迷失在了庞大的数据洪流之中，再未归来。", failDeath:true, failDeathChance:0.5, failCause:"思维湮灭",
          regressResult:"思维融合的过程中出现了严重错乱，你的意识勉强被拉回了自己的躯壳，只是许多记忆与思维方式都变得混沌破碎。", regressEffect:{wit:-2,luck:-1,charm:-1}, regressLifespanPenalty:5},
         {label:"只接受保守型局部治疗", riskyChance:0.75, lifespanBonus:8,
          successResult:"你只接受了风险较低的局部治疗，效果有限，却也稳妥地延长了几年寿命。",
@@ -4570,8 +4620,8 @@ const WORLD_EVENTS = {
         {label:"保留专利，留给家族后代", result:"你选择保留了这份专利，作为一份实实在在的财富留给了家族后代。", statEffect:{wealth:2}},
         {label:"捐给科研机构，继续深化研究", result:"你把专利捐给了科研机构，希望这份技术能在专业的手中继续深化下去。", statEffect:{wit:1,luck:1}}
       ]},
-      {death:true, text:"改造留下的隐患终于在一次寻常的日常检查中被发现——只是发现的时候，已经来不及了，你的身体彻底停止了运转。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"系统崩溃"},
-      {text:"突破之后，你的思维运转速度快得连殖民地最先进的计算矩阵都望尘莫及。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"wit")>=8},
+      {death:true, text:"改造留下的隐患终于在一次寻常的日常检查中被发现——只是发现的时候，已经来不及了，你的身体彻底停止了运转。", weight:1, cond:c=>worldStateVal(c,"scifi_breakthrough")>=1, cause:"系统崩溃"},
+      {text:"突破之后，你的思维运转速度快得连殖民地最先进的计算矩阵都望尘莫及。", weight:6, cond:c=>worldStateVal(c,"scifi_breakthrough")>=1 && stat(c,"wit")>=8},
       {text:"这些年殖民地资源分配日趋公平，你亲眼见证了这片人工聚居地因此变得更加团结。", weight:6, cond:c=>worldStateVal(c,"scifi_colonyInfluence")>=2},
       {text:"殖民地资源分配依旧向核心舱层倾斜，你看着底层居民的处境越来越艰难，心里清楚，这终究埋下了隐患。", weight:6, cond:c=>worldStateVal(c,"scifi_colonyInfluence")<=-1}
     ]
@@ -4595,6 +4645,7 @@ const WORLD_EVENTS = {
       ], cond:c=>state.age<=1}
     ],
     youth:[
+      {choice:true, weight:6, text:"新兵分配的日子到了，三支部队都向你伸出了手。", options:[{label:"加入突击连", result:"你加入了冲在最前的突击连，每一场战斗都在锤炼你的血性与筋骨。", statEffect:{power:1}},{label:"加入侦察排", result:"你加入了神出鬼没的侦察排，学会了在死亡的缝隙里寻找生路。", statEffect:{luck:1}},{label:"加入军械库", result:"你被分进了军械库，日日与机油和图纸为伴，成了半个技术专家。", statEffect:{wit:1}}]},
       {text:"帝国的征募官找上了门来，你告别故乡，登上了驶向前线的运兵船，从此再未回头。", weight:10},
       {text:"你在新兵训练营的实弹演习中打出了全营最高的战绩，教官当场记下了你的名字。", weight:8, cond:c=>stat(c,"power")>=7},
       {text:"你亲眼目睹了人生中第一场与异形的遭遇战，从那天起，你彻底明白了「战争永无止境」的含义。", weight:7},
@@ -4612,11 +4663,14 @@ const WORLD_EVENTS = {
       {text:"你被派去协助解剖一头缴获的异形尸体，那种诡异的生理构造让你终生难忘。", weight:6}
     ],
     adult:[
+      {text:"一场惨烈的战役中，一名混沌领主当着你的面屠灭了你的整支连队——他临走前记下了你的脸：『下次再玩。』你也记下了他的。", weight:5, setFlag:"warhammer_quest1"},
+      {choice:true, weight:6, text:"战场清扫时，敌方一名年轻士兵扔下武器向你投降，按条例你有三种处置方式。", options:[{label:"受降并保其性命", result:"你接受了他的投降，依照战俘条例保下了他的性命——放下枪口的那一瞬间，你觉得自己打了这么多年仗，终于像个人了。", statEffect:{charm:1}, setFlag:"warhammer_prisoner"},{label:"移交审判庭", result:"你把他移交给了随军审判庭，一切依照程序，无可指摘。", statEffect:{origin:1}},{label:"睁一只眼闭一只眼放他走", result:"你转过身去装作没看见，身后传来一阵渐远的脚步声。", statEffect:{luck:1}}]},
+      {text:"你利用战间的空隙给机甲的机魂做了一次彻底的保养祷告，此后数月它运转得格外顺滑。", weight:6},
       {text:"你在与异形大军的殊死搏斗中活了下来，被亲手授予了象征荣耀的帝国勋章。", weight:10, achievement:"帝国勋章"},
       {text:"你在濒死之际隐约听到了帝皇清晰的低语，浑身伤势竟奇迹般地开始迅速愈合。", weight:8, cond:c=>hasTag(c,"emperorwhisper")},
       {text:"你与那位约定同生共死的战友并肩作战，在一场殊死之战中互相救了对方一命。", weight:6, cond:c=>hasFlag(c,"warhammer_brother")},
       {text:"军团里的审判官对你进行了一次突袭式的忠诚审查，气氛压抑得让所有人都喘不过气。", weight:6},
-      {text:"你驾驶的机甲的机魂忽然发出了从未有过的异常波动，仿佛在向你传递某种警告。", weight:6},
+      {text:"你驾驶的机甲的机魂忽然发出了从未有过的异常波动，仿佛在向你传递某种警告。", weight:6, setFlag:"warhammer_machine_warning"},
       {choice:true, weight:6, text:"审判官怀疑你的机甲遭到了混沌污染，要求立刻销毁，你却坚信这只是误会。", options:[
         {label:"据理力争，坚持为机甲辩护", result:"你据理力争，最终证明了机甲的清白，审判官虽面无表情，却也不再追究。", statEffect:{wit:1,power:1}, achievement:"据理力争"},
         {label:"服从命令，忍痛销毁机甲", result:"你选择了服从命令，忍痛看着陪伴多年的机甲被销毁，心里空落落的。", statEffect:{origin:1}},
@@ -4640,6 +4694,8 @@ const WORLD_EVENTS = {
       {text:"你因为比同龄人更早接受训练，在正式入伍时已经展现出超乎寻常的适应力，教官都说你像是天生的军人。", weight:6, cond:c=>hasFlag(c,"warhammer_early_recruit"), statEffect:{power:1}}
     ],
     prime:[
+      {text:"多年的追猎让你摸清了那名混沌领主的行踪规律——他盘踞在一颗被污染的堡垒世界，而你的复仇计划已经准备了半生。", weight:12, cond:c=>hasFlag(c,"warhammer_quest1"), setFlag:"warhammer_quest2"},
+      {text:"你在清剿一处废弃空间站时，发现墙上用一种古老的东方文字刻着一行字，翻译器显示：『此地灵气稀薄，不宜久留』。", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
       {text:"你率领一支残破不堪的军团死守住了一座至关重要的星门要塞，为帝国争取了宝贵的喘息之机。", weight:10, achievement:"星门守卫者"},
       {text:"你被正式擢升为军团指挥官，麾下的战士们都尊称你为「不朽的钢铁意志」。", weight:8, cond:c=>stat(c,"origin")>=7},
       {text:"你带领残部走出了被称为「死亡禁区」的坠毁战舰残骸，从此成了军团中人尽皆知的传奇。", weight:7},
@@ -4662,6 +4718,12 @@ const WORLD_EVENTS = {
       ]}
     ],
     elder:[
+      {choice:true, weight:14, text:"堡垒世界的坐标已经锁定，突击艇整装待发——这场私人的复仇，帝国不会支援你，但你等这一天已经等了一辈子。", cond:c=>hasFlag(c,"warhammer_quest2"), options:[{label:"发动最后的猎杀", riskyChance:0.38, lifespanBonus:10, successEffect:{power:4,charm:2}, successResult:"你把链锯剑捅进那名混沌领主胸膛的时候，轻声说了当年连队每一个人的名字——复仇落幕，你的传奇在军团里传唱至今。", successAchievement:"毕生所求", failResult:"宿敌的力量远超预估，你倒在了他的王座之前——但你脸上带着笑：至少，你来过了。", failDeath:true, failDeathChance:0.35, failCause:"复仇失败", regressResult:"突袭功亏一篑，你重伤撤离——宿敌的堡垒防御已经升级，此生怕是再没有第二次机会了。", regressEffect:{power:-2,health:-2}},{label:"把情报移交给审判庭", result:"你把毕生收集的情报移交给了审判庭——半年后，歼灭舰队将那颗堡垒世界化为了玻璃。仇报了，只是不是用你的手。", statEffect:{wit:1,origin:1}}]},
+      {choice:true, weight:30, repeatable:true, text:"你的躯体已到极限，技术神甫提出了最后的荣耀——将你安葬进一台无畏机甲，以钢铁圣棺的形态继续为帝皇作战。", cond:c=>worldStateVal(c,"warhammer_breakthrough")===1 && state.age>=(hasTag(c,"transcendent")?58:64) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?3:5)), options:[{label:"接受无畏机甲安葬", riskyChance:0.18, lifespanBonus:80, successEffect:{power:4,health:3}, successResult:"安葬成功——你在钢铁圣棺中重新睁开了『眼睛』，从此你就是行走的堡垒，帝皇最古老的怒火。", successAchievement:"二度超脱", worldStateKey:"warhammer_breakthrough", worldStateDelta:1, failResult:"灵魂与机甲的链接在最后关头断裂，你的意识永远消散在了冰冷的钢铁之中。", failDeath:true, failDeathChance:0.6, failCause:"安葬失败", regressResult:"链接失败被紧急中断，你被从机甲中取出时已奄奄一息，元气大伤。", regressEffect:{power:-3,health:-3}, regressLifespanPenalty:30},{label:"不再冒险，安享余生", result:"你决定不再挑战命运的极限，安然接受岁月本来的模样。", statEffect:{luck:1}}]},
+      {text:"你把历年战役的勋章都收进了一只旧弹药箱，孙辈们最爱缠着你，要听每一枚勋章背后的故事。", weight:6},
+      {text:"当年那名向你投降的年轻士兵，后来成了两军停火谈判桌上关键的传话人——有人说那场和平，是从你放下枪口的那一刻开始的。", weight:6, cond:c=>hasFlag(c,"warhammer_prisoner"), statEffect:{charm:1}},
+      {text:"帝国为你铸造了一尊雕像，立在你曾誓死守卫过的星港广场上，往来的士兵都会向它敬礼。", weight:6, cond:c=>stat(c,"power")>=8, statEffect:{charm:1}},
+      {text:"多年之后你才明白，当年机魂的那次异常波动究竟在警告什么——正是那份没来由的警觉，让你在一次伏击中提前一步保住了性命。", weight:6, cond:c=>hasFlag(c,"warhammer_machine_warning"), statEffect:{luck:1}},
       {text:"在生命的最后一刻，你的躯体被虔诚地封入无畏机甲的圣龛之中，继续为帝皇而战，直至永远。", weight:10},
       {text:"你在临终前只留下一句遗言：「即使身死，帝国的战旗也绝不会倒下」，随后被追授了殉道者之名。", weight:8},
       {text:"你把那位战友当年留下的遗物郑重地交给了他的后人，告诉他们那个人曾经是多么了不起的战士。", weight:6, cond:c=>hasFlag(c,"warhammer_brother")},
@@ -4675,10 +4737,10 @@ const WORLD_EVENTS = {
       ]},
       {text:"你把自己毕生的战场医疗经验整理成册，成了帝国医疗兵的标准教材。", weight:6, cond:c=>hasFlag(c,"warhammer_medic")},
       {text:"你亲手缝制的那面军团旗帜如今已经破损不堪，却依然骄傲地飘扬在军团的最前线。", weight:6, cond:c=>hasFlag(c,"warhammer_banner")},
-      {choice:true, weight:5, repeatable:true, text:"军团的技术军官提出为你植入一整套延寿型机械改造，这或许能让你继续为帝皇征战——但排异的风险不容小觑。", cond:c=>state.age>=(hasTag(c,"transcendent")?50:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
-        {label:"接受完整机械改造", riskyChance:0.25, lifespanBonus:20, successEffect:{power:10,health:4,origin:2},
-         successResult:"你的躯体被彻底容纳进了一具无畏机甲的圣体之中，机械飞升让你获得了近乎不死的躯壳，从此你将以血肉与钢铁交融的形态，为帝皇再战千年。", successAchievement:"突破天命",
-         failResult:"排异反应瞬间爆发，机械与血肉的冲突彻底摧毁了你的身体。", failDeath:true, failDeathChance:0.6, failCause:"改造排异",
+      {choice:true, weight:5, repeatable:true, text:"军团的技术军官提出为你植入一整套延寿型机械改造，这或许能让你继续为帝皇征战——但排异的风险不容小觑。", cond:c=>state.age>=(hasTag(c,"transcendent")?51:56) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?8:12)), options:[
+        {label:"接受完整机械改造", riskyChance:0.3, lifespanBonus:40, successEffect:{power:10,health:4,origin:2},
+         successResult:"你的躯体被彻底容纳进了一具无畏机甲的圣体之中，机械飞升让你获得了近乎不死的躯壳，从此你将以血肉与钢铁交融的形态，为帝皇再战千年。", successAchievement:"突破天命", worldStateKey:"warhammer_breakthrough", worldStateDelta:1,
+         failResult:"排异反应瞬间爆发，机械与血肉的冲突彻底摧毁了你的身体。", failDeath:true, failDeathChance:0.65, failCause:"改造排异",
          regressResult:"排异反应瞬间爆发，你侥幸没有被彻底摧毁，只是这具残破的躯体从此再难恢复往日的战力。", regressEffect:{power:-2,health:-2}, regressLifespanPenalty:5},
         {label:"只接受局部小型改造", riskyChance:0.75, lifespanBonus:8,
          successResult:"你只接受了局部的小型改造，效果有限，却也稳妥地延长了几年的战斗生涯。",
@@ -4690,8 +4752,8 @@ const WORLD_EVENTS = {
         {label:"静待自然终老，把余生交给祈祷", result:"你选择静待自然终老，把余生交给了日复一日的祈祷，心境反倒愈发澄澈。", statEffect:{luck:1}},
         {label:"把身躯献祭给机魂研究", result:"你自愿把身躯献祭给了机魂研究，用自己的方式为帝国的未来添了一份力。", statEffect:{origin:2}, achievement:"以身献祭"}
       ]},
-      {death:true, text:"陪伴你多年的那具改造躯体，机魂终于在一次寻常的巡逻中彻底寂灭，再未苏醒。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"机魂寂灭"},
-      {text:"突破之后，你在战场上的存在感变得可怕，敌人光是看到你的身影就已经胆寒。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"power")>=8},
+      {death:true, text:"陪伴你多年的那具改造躯体，机魂终于在一次寻常的巡逻中彻底寂灭，再未苏醒。", weight:1, cond:c=>worldStateVal(c,"warhammer_breakthrough")>=1, cause:"机魂寂灭"},
+      {text:"突破之后，你在战场上的存在感变得可怕，敌人光是看到你的身影就已经胆寒。", weight:6, cond:c=>worldStateVal(c,"warhammer_breakthrough")>=1 && stat(c,"power")>=8},
       {text:"这些年军团新兵训练日趋完善，你亲眼见证了麾下的战士一代比一代更加精锐。", weight:6, cond:c=>worldStateVal(c,"warhammer_legionInfluence")>=2},
       {text:"军团新兵始终仓促上阵，你看着一批批年轻的生命草草消耗在战场上，心里明白，这终究是杯水车薪。", weight:6, cond:c=>worldStateVal(c,"warhammer_legionInfluence")<=-1}
     ]
@@ -4714,10 +4776,11 @@ const WORLD_EVENTS = {
       ], cond:c=>state.age<=1}
     ],
     youth:[
+      {text:"你帮邻村画了一整个雨季的平安符，虽然累得手腕发酸，却也把基本功练得炉火纯青。", weight:6},
       {text:"你被城隍庙里的老道长收为徒弟，开始学习驱邪捉妖、画符念咒的本领。", weight:10},
       {text:"镇上的一只小狐妖时常变成人形来找你玩耍，村民们都当你俩是青梅竹马的玩伴，浑然不知真相。", weight:8, cond:c=>stat(c,"charm")>=7},
       {text:"你误打误撞闯入了后山的一处古墓，侥幸捡回一条命，却也因此染上了些不同寻常的体质。", weight:7},
-      {text:"你无意间用一枚老铜钱照出了一个躲在暗处的鬼魅，从此对这类『照妖』的手段起了兴趣。", weight:6},
+      {text:"你无意间用一枚老铜钱照出了一个躲在暗处的鬼魅，从此对这类『照妖』的手段起了兴趣。", weight:6, setFlag:"yaoguai_coin_interest"},
       {text:"你和一个同样出身贫寒的同门义结金兰，两人发誓今后有福同享、有难同当。", weight:6, setFlag:"yaoguai_sworn"},
       {text:"你在深山中捡到了一面泛着幽光的古镜，镜子里似乎藏着一段被遗忘的往事。", weight:6, setFlag:"yaoguai_mirror"},
       {choice:true, weight:6, text:"城隍庙的老道长让你选择修行方向：符箓、剑术还是丹药，这将决定你往后的道法根基。", options:[
@@ -4732,6 +4795,9 @@ const WORLD_EVENTS = {
       {text:"当年那道法镇压的印记渐渐显露出真容，你隐约能感觉到体内封着一丝不同寻常的力量。", weight:6, cond:c=>hasFlag(c,"yaoguai_sealed"), statEffect:{wit:1}}
     ],
     adult:[
+      {text:"你萌生了一个前无古人的念头——编纂一部收录天下妖族的《百妖谱》，为人妖两道留一部信史。", weight:5, setFlag:"yaoguai_quest1"},
+      {choice:true, weight:6, text:"一只重伤的小狐妖倒在你家门口，气若游丝，救与不救全在你一念之间。", options:[{label:"抱回屋里悉心救治", result:"你把它抱回屋里救治了整整一个月，临走时它郑重地朝你作了个揖，说这份恩情记下了。", statEffect:{charm:1}, setFlag:"yaoguai_fox"},{label:"送去道观请道长处置", result:"你把它送去了道观，道长看了看伤势，叹了句『也是个可怜的』，便收下了。", statEffect:{wit:1}},{label:"洒符驱走以绝后患", result:"你洒了道符把它驱走了——人妖殊途，多一事不如少一事。", statEffect:{power:1}}]},
+      {choice:true, weight:6, text:"一只被冤枉偷鸡的黄鼠狼精跪在你面前喊冤，村民们则群情激愤地要你替天行道。", options:[{label:"出手护下，慢慢查证", result:"你顶着村民的怒火护下了它，查证之后果然另有真凶，此事传开后妖族都念你的公道。", statEffect:{charm:1}},{label:"细细盘问，当场断案", result:"你不动声色地盘问出了破绽，当场揪出了真正偷鸡的野狗，两边都心服口服。", statEffect:{wit:1}},{label:"不蹚浑水，转身就走", result:"你觉得此事蹊跷，不愿蹚这趟浑水，转身走了——后来听说案子不了了之。", statEffect:{luck:1}}]},
       {text:"你在一场夜半的妖乱中初次降服了一只作祟多年的山精，从此在坊间也算小有名气。", weight:10, achievement:"降妖有成"},
       {text:"你与一位倾城的狐族少女萍水相逢，她笑着说这是「几世修来的缘分」，从此常伴你左右。", weight:8, cond:c=>hasTag(c,"foxblood")},
       {text:"你在江湖上因为一次误伤妖族而被列入了『妖界通缉令』，往后行走江湖都要多加小心。", weight:6},
@@ -4759,6 +4825,10 @@ const WORLD_EVENTS = {
       ]}
     ],
     prime:[
+      {text:"数十年间你踏遍山川，笔下的妖怪已有九十九种——只差传说中从未有人见过真容的『山君』，便可功德圆满。", weight:12, cond:c=>hasFlag(c,"yaoguai_quest1"), setFlag:"yaoguai_quest2"},
+      {text:"一只千年老妖跟你说，它年轻时曾误入一道裂隙，看见过一座由钢铁与霓虹构成的不夜城——城里的人，身体里都长着机器。", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
+      {text:"连妖界都听说了你的侠名，一位大妖特意托人送来请帖，邀你出席妖界百年一度的宴席。", weight:6, cond:c=>stat(c,"charm")>=8, statEffect:{luck:1}},
+      {text:"你把当年那枚老铜钱重新祭炼了一番，炼成了一件小有名气的照妖法器，江湖上不少同道专程登门借用。", weight:6, cond:c=>hasFlag(c,"yaoguai_coin_interest"), statEffect:{charm:1,wit:1}},
       {text:"你游历大江南北，与形形色色的妖怪化敌为友，甚至结拜了一位性情爽朗的狐仙义妹。", weight:10, achievement:"人妖之交"},
       {text:"你在江湖上开了一间不起眼的小道观，专为往来的百姓答疑解惑、驱邪辟灾。", weight:8},
       {text:"你被朝廷请去镇守一方水患多发的辖地，此后那片水域再也没有闹过妖乱。", weight:7},
@@ -4781,6 +4851,10 @@ const WORLD_EVENTS = {
       {text:"你时常回山中拜访那位隐士，两人渐渐成了忘年之交，时常彻夜畴论道法。", weight:6, cond:c=>hasFlag(c,"yaoguai_hermit")}
     ],
     elder:[
+      {choice:true, weight:14, text:"多方打探后你终于寻到了山君的巢穴——它是妖族之祖，见之者非死即疯，但《百妖谱》的最后一页在等它。", cond:c=>hasFlag(c,"yaoguai_quest2"), options:[{label:"深入巢穴，面见山君", riskyChance:0.42, lifespanBonus:15, successEffect:{wit:3,charm:3}, successResult:"山君睁开眼看了你很久，忽然开口：『百年来第一个不为杀我而来的人。』它允你记下真容——《百妖谱》大成，人妖两道皆奉为圣典。", successAchievement:"毕生所求", failResult:"你终究没能承受直视妖祖的代价，魂魄消散在了巢穴深处——只有那部九十九妖的残谱流传了下来。", failDeath:true, failDeathChance:0.30, failCause:"直面妖祖", regressResult:"山君的一声低吼就震碎了你的心神，你被同伴拖了回来，从此再不敢提第一百妖的事。", regressEffect:{wit:-1,health:-2}},{label:"以九十九妖成书", result:"你在最后一页画了一个空白的轮廓，题字：『留待后人』——《九十九妖谱》依然成了传世之作。", statEffect:{wit:2}}]},
+      {choice:true, weight:30, repeatable:true, text:"夺造化之后，那位游方术士再次现身，告诉你最后一步——『尸解重修』：舍去这具躯壳，以魂魄重塑仙体，从此跳出寿数之外。", cond:c=>worldStateVal(c,"yaoguai_breakthrough")===1 && state.age>=(hasTag(c,"transcendent")?58:64) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?3:5)), options:[{label:"尝试尸解重修", riskyChance:0.15, lifespanBonus:70, successEffect:{wit:3,luck:3}, successResult:"尸解成功——你的魂魄在旧躯壳的灰烬中重塑出一具近乎仙体的新身，坊间都说你已是半个陆地神仙。", successAchievement:"二度超脱", worldStateKey:"yaoguai_breakthrough", worldStateDelta:1, failResult:"尸解到一半，你的魂魄没能凝住，一缕缕散在了风里。", failDeath:true, failDeathChance:0.55, failCause:"魂飞魄散", regressResult:"尸解失败，你狼狈地退回了原来的躯壳，道行大损，好在命还在。", regressEffect:{wit:-3,power:-2}, regressLifespanPenalty:25},{label:"不再冒险，安享余生", result:"你决定不再挑战命运的极限，安然接受岁月本来的模样。", statEffect:{luck:1}}]},
+      {text:"你晚年在院里搭了个茶棚，人妖两道的旧识路过都爱进来讨杯茶喝，聊聊各自这些年的近况。", weight:6},
+      {text:"当年救下的那只小狐妖如今道行有成，每逢你寿辰都会化作人形登门贺寿，成了坊间一段人尽皆知的佳话。", weight:6, cond:c=>hasFlag(c,"yaoguai_fox"), statEffect:{luck:1}},
       {text:"你于风清月朗之夜悄然羽化，坊间都传说你最终修成了半仙之体，隐入了深山之中。", weight:10},
       {text:"你临终前将一身道法尽数传给了闻讯赶来的徒弟，笑着说「这江湖，往后就交给你们了」。", weight:8},
       {text:"你与那位义结金兰的兄弟一同白发苍苍，约定死后也要葬在同一处，做一世的邻居。", weight:6, cond:c=>hasFlag(c,"yaoguai_sworn")},
@@ -4789,9 +4863,9 @@ const WORLD_EVENTS = {
       {text:"你临终前又一次梦到了那位『前世』，对方只是微笑着向你挥了挥手，仿佛在说时候到了。", weight:6, cond:c=>hasFlag(c,"yaoguai_pastlife")},
       {text:"你把自己这些年参悟的道法心得整理成册，托人送去给那位隐居深山的老友，也算是一份谢礼。", weight:6, cond:c=>hasFlag(c,"yaoguai_hermit")},
       {text:"你把家族这些年积累的驱魔心得毫无保留地传给了下一代，嘱咐他们守好这份家业。", weight:6},
-      {choice:true, weight:5, repeatable:true, text:"一位游方术士告诉你一个夺天地造化续命的秘法，或许能让你多活几十年——但这个秘法凶险异常，稍有不慎便是万劫不复。", cond:c=>state.age>=(hasTag(c,"transcendent")?50:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
-        {label:"拼死一试夺造化秘法", riskyChance:0.25, lifespanBonus:20, successEffect:{wit:10,power:4,luck:2},
-         successResult:"你侵吞了一丝天地造化，硬生生续了命，法力与道行都随之精进了一层，只是这份秘法的代价，恐怕日后还要偿还。", successAchievement:"突破天命",
+      {choice:true, weight:5, repeatable:true, text:"一位游方术士告诉你一个夺天地造化续命的秘法，或许能让你多活几十年——但这个秘法凶险异常，稍有不慎便是万劫不复。", cond:c=>state.age>=(hasTag(c,"transcendent")?51:56) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?8:12)), options:[
+        {label:"拼死一试夺造化秘法", riskyChance:0.28, lifespanBonus:50, successEffect:{wit:10,power:4,luck:2},
+         successResult:"你侵吞了一丝天地造化，硬生生续了命，法力与道行都随之精进了一层，只是这份秘法的代价，恐怕日后还要偿还。", successAchievement:"突破天命", worldStateKey:"yaoguai_breakthrough", worldStateDelta:1,
          failResult:"天地造化反噬而来，你的魂魄被瞬间撕碎，连一句遗言都没能留下。", failDeath:true, failDeathChance:0.6, failCause:"夺舍反噬",
          regressResult:"天地造化反噬而来，你的魂魄侥幸没有被彻底撕碎，却也损耗大半，往后的道行反倒大不如前。", regressEffect:{power:-2,wit:-2}, regressLifespanPenalty:5},
         {label:"只服用普通续命丹药", riskyChance:0.75, lifespanBonus:8,
@@ -4804,8 +4878,8 @@ const WORLD_EVENTS = {
         {label:"拒绝轮回，执念化作游魂守护乡土", result:"你拒绝了轮回，执念化作一缕游魂，此后一直默默守护着这片乡土。", statEffect:{power:1,health:-1}, achievement:"执念不灭"},
         {label:"请求带着记忆转世", reincarnate:"memory"}
       ]},
-      {death:true, text:"当年侵吞的那丝天地造化，终究不是你能长久拥有的东西，在一个寻常的夜里，它悄然收回，带走了你的命。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"造化透支"},
-      {text:"突破之后，你隐隐能预感到一些还未发生的事，坊间都说你已经半入仙途。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"luck")>=8},
+      {death:true, text:"当年侵吞的那丝天地造化，终究不是你能长久拥有的东西，在一个寻常的夜里，它悄然收回，带走了你的命。", weight:1, cond:c=>worldStateVal(c,"yaoguai_breakthrough")>=1, cause:"造化透支"},
+      {text:"突破之后，你隐隐能预感到一些还未发生的事，坊间都说你已经半入仙途。", weight:6, cond:c=>worldStateVal(c,"yaoguai_breakthrough")>=1 && stat(c,"luck")>=8},
       {text:"这些年人妖之间的关系日渐缓和，你亲眼见证了这片江湖因此少了许多本不必发生的杀戮。", weight:6, cond:c=>worldStateVal(c,"yaoguai_jianghuInfluence")>=2},
       {text:"人妖之争始终未能平息，你看着这片江湖年复一年地陷在纠缠不清的仇恨里，心里明白，这条路终究还是越走越窄。", weight:6, cond:c=>worldStateVal(c,"yaoguai_jianghuInfluence")<=-1}
     ]
@@ -4829,6 +4903,7 @@ const WORLD_EVENTS = {
       ], cond:c=>state.age<=1}
     ],
     youth:[
+      {choice:true, weight:6, text:"你攒下的零件终于够组装人生中第一件义体了，改装师问你要哪一种。", options:[{label:"装一只战术义眼", result:"你装上了战术义眼，从此看这个废土世界的方式彻底变了。", statEffect:{wit:1}},{label:"装一条机械臂", result:"你装上了机械臂，握力表的指针直接拉到了表底。", statEffect:{power:1}},{label:"装一枚神经加速器", result:"你装上了神经加速器，那种千钧一发之际时间变慢的感觉，救过你不止一次。", statEffect:{luck:1}}]},
       {text:"你在黑市换来了人生中第一件义体改造——一只机械手臂，从此在废土上多了几分活下去的底气。", weight:10},
       {text:"你在废土帮派的地下拳赛里连续获胜，靠着赢来的奖金给自己添置了第二件义体。", weight:8, cond:c=>stat(c,"power")>=7},
       {text:"你在垃圾场里意外挖出了一台还能运转的旧世界终端，从里面读到了不少早已失传的禁忌知识。", weight:7},
@@ -4847,6 +4922,9 @@ const WORLD_EVENTS = {
       {text:"那枚幼时植入的实验芯片渐渐显现出作用，你处理信息的速度明显比旁人快出一截。", weight:6, cond:c=>hasFlag(c,"cyberpunk_early_chip"), statEffect:{wit:1}}
     ],
     adult:[
+      {text:"你在一段战前数据残片里发现了『创世代码』的传说——据说那是旧世界网络的根权限，掌握它的人能重启整个废土的基础设施。", weight:5, setFlag:"cyberpunk_quest1"},
+      {choice:true, weight:6, text:"一个四处流浪的AI核心敲开了你的系统防火墙，礼貌地请求一个栖身之所。", options:[{label:"划一块存储空间收留它", result:"你划了块存储空间收留了它，它安顿下来的第一件事是把你乱成一团的文件全部整理归档了。", statEffect:{wit:1}, setFlag:"cyberpunk_strayai"},{label:"打包卖给数据商人", result:"你把它打包卖给了数据商人，换了一笔不错的报酬——废土上，心软是奢侈品。", statEffect:{wealth:1}},{label:"格式化处理以绝隐患", result:"你没敢冒险，直接格式化了这段来历不明的代码——安全第一。", statEffect:{power:1}}]},
+      {text:"你把捡来的废弃机械臂改装成了会煮咖啡的助手，成了据点里最抢手的小玩意儿。", weight:6},
       {text:"你加入了废土上小有名气的拾荒者公会，凭借过硬的本领很快就在圈子里闯出了名号。", weight:10, achievement:"废土拾荒者"},
       {text:"你的义体在一次交火中严重受损，黑市医生检查后却说这具身体的适配度「简直是为战斗而生」。", weight:8, cond:c=>hasTag(c,"cyberlimb")},
       {text:"你的义体第一次出现了严重的排异反应，黑市医生说这次多亏你的神经系统底子好，才没酿成大祸。", weight:6},
@@ -4870,6 +4948,9 @@ const WORLD_EVENTS = {
       ]}
     ],
     prime:[
+      {text:"半生的追查让你集齐了创世代码的七段密钥中的六段——最后一段藏在旧世界的中央数据堡垒深处，那里的防御系统仍在运转。", weight:12, cond:c=>hasFlag(c,"cyberpunk_quest1"), setFlag:"cyberpunk_quest2"},
+      {text:"你在废土深处捡到一柄永不生锈的古剑，剑身上刻着看不懂的云纹，所有检测都显示它的材质不属于已知的元素周期表。", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
+      {text:"你破解了一段战前遗留的加密档案，里面的旧世界技术图纸让整个据点的工程水平前进了一大步。", weight:6, cond:c=>stat(c,"wit")>=8, statEffect:{wit:1}},
       {text:"你带队攻入了旧世界遗留的地下军事基地，缴获了一批足以改变势力格局的战前科技。", weight:10, achievement:"深渊拾荒王"},
       {text:"你在废土上建立起了一支颇具规模的商队，穿梭在各个据点之间贩卖情报与紧俏补给。", weight:8},
       {choice:true, weight:6, text:"废土据点就『新技术该公开共享还是垂直垄断』产生了分歧。", options:[
@@ -4891,6 +4972,10 @@ const WORLD_EVENTS = {
       {text:"你终于查明了那个数据幽灵的真实身份，两人从虚拟空间的对手变成了现实中的合作伙伴。", weight:6, cond:c=>hasFlag(c,"cyberpunk_data_ghost")}
     ],
     elder:[
+      {choice:true, weight:14, text:"中央数据堡垒的入口就在眼前——闯进去拿到最后一段密钥，你就能重启废土的水电网络，或者被百年前的防御系统做成焦炭。", cond:c=>hasFlag(c,"cyberpunk_quest2"), options:[{label:"闯入数据堡垒", riskyChance:0.4, lifespanBonus:15, successEffect:{wit:4,origin:2}, successResult:"当第七段密钥归位，整个废土的路灯在同一个夜晚次第亮起——人们涌上街头看着这场『奇迹』，而你坐在堡垒顶层，安静地关掉了自己的通讯器。", successAchievement:"毕生所求", failResult:"防御系统的激光矩阵比情报里的更完整——你的故事结束在了距离终端只剩十七步的地方。", failDeath:true, failDeathChance:0.32, failCause:"防御矩阵", regressResult:"你在防御系统全面激活前狼狈撤出，左腿永远留在了那道闸门里——数据堡垒此后进入永久封锁。", regressEffect:{health:-2,power:-1}},{label:"把六段密钥分发出去", result:"你把六段密钥分发给了废土上六个最大的据点——也许联合起来的他们，某天能走完你没走完的最后一步。", statEffect:{charm:2}}]},
+      {choice:true, weight:30, repeatable:true, text:"第一次意识转移之后，那名黑市医生带来了终极方案——『全意识数字化』：彻底放弃肉身，把完整的你上传进据点的核心网络。", cond:c=>worldStateVal(c,"cyberpunk_breakthrough")===1 && state.age>=(hasTag(c,"transcendent")?52:58) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?3:5)), options:[{label:"进行全意识数字化", riskyChance:0.2, lifespanBonus:50, successEffect:{wit:4,luck:2}, successResult:"上传成功——你在网络中重新『醒来』，从此你的生命以数据的形式延续，肉体的衰亡再与你无关。", successAchievement:"二度超脱", worldStateKey:"cyberpunk_breakthrough", worldStateDelta:1, failResult:"上传进行到97%时发生了不可逆的数据损毁，剩下的3%，恰好是『你之所以是你』的那部分。", failDeath:true, failDeathChance:0.5, failCause:"上传失败", regressResult:"上传中途回滚，你退回了肉身，只是记忆出现了大量无法修复的空洞。", regressEffect:{wit:-3,charm:-2}, regressLifespanPenalty:20},{label:"不再冒险，安享余生", result:"你决定不再挑战命运的极限，安然接受岁月本来的模样。", statEffect:{luck:1}}]},
+      {text:"你退休后在据点开了间旧零件铺子，年轻的改装师们都爱来淘货，顺便听你讲讲旧时代的故事。", weight:6},
+      {text:"当年收留的那个流浪AI陪你走过了大半辈子，如今它管理着整个据点的基础系统，居民们都亲切地叫它『老伙计』。", weight:6, cond:c=>hasFlag(c,"cyberpunk_strayai"), statEffect:{charm:1}},
       {text:"你在废土上建立起了一座能够自给自足的绿洲聚居地，成了后来者口口相传的传奇拓荒人。", weight:10},
       {text:"你把毕生搜集的旧世界残卷整理成册，交给聚居地的孩子们，作为重建文明的一颗种子。", weight:8},
       {text:"你把那台曾经自行开机的老式AI核心妥善地保存了下来，当作留给后人的一份特殊遗产。", weight:6},
@@ -4904,10 +4989,10 @@ const WORLD_EVENTS = {
       ]},
       {text:"你把自己那台陪伴多年的拼装赛车捐给了废土赛车协会，作为历史文物保存了下来。", weight:6, cond:c=>hasFlag(c,"cyberpunk_racer")},
       {text:"你与那位数据幽灵伙伴一起，把这些年黑入行动中积累的技术心得整理成了地下黑客圈流传的『圣经』。", weight:6, cond:c=>hasFlag(c,"cyberpunk_data_ghost")},
-      {choice:true, weight:5, repeatable:true, text:"一名黑市医生提出帮你把意识部分备份进一具全新的义体外壳，理论上能延长你的『生命』——但转移过程风险极高。", cond:c=>state.age>=(hasTag(c,"transcendent")?50:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
-        {label:"冒险进行完整意识转移", riskyChance:0.25, lifespanBonus:20, successEffect:{wit:10,power:4,luck:2},
-         successResult:"意识转移在生死边缘完成了，这场彻底的思维突破让你的『生命』以一种全新的方式延续了下去，反应与思维都远超从前。", successAchievement:"突破天命",
-         failResult:"转移过程中意识信号骤然中断，那具全新的义体外壳里，再也没能醒来一个人。", failDeath:true, failDeathChance:0.6, failCause:"转移中断",
+      {choice:true, weight:5, repeatable:true, text:"一名黑市医生提出帮你把意识部分备份进一具全新的义体外壳，理论上能延长你的『生命』——但转移过程风险极高。", cond:c=>state.age>=(hasTag(c,"transcendent")?51:52) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?7:10)), options:[
+        {label:"冒险进行完整意识转移", riskyChance:0.4, lifespanBonus:35, successEffect:{wit:10,power:4,luck:2},
+         successResult:"意识转移在生死边缘完成了，这场彻底的思维突破让你的『生命』以一种全新的方式延续了下去，反应与思维都远超从前。", successAchievement:"突破天命", worldStateKey:"cyberpunk_breakthrough", worldStateDelta:1,
+         failResult:"转移过程中意识信号骤然中断，那具全新的义体外壳里，再也没能醒来一个人。", failDeath:true, failDeathChance:0.5, failCause:"转移中断",
          regressResult:"转移过程中意识信号出现严重乱码，你侥幸被拉回了原本的躯体，只是许多记忆与反应能力都大不如前。", regressEffect:{wit:-2,power:-1}, regressLifespanPenalty:5},
         {label:"只备份部分记忆数据", riskyChance:0.75, lifespanBonus:8,
          successResult:"你只备份了部分记忆数据，效果有限，却也稳妥地为自己续了几年。",
@@ -4919,8 +5004,8 @@ const WORLD_EVENTS = {
         {label:"拒绝上传，坦然接受死亡", result:"你拒绝了上传，坦然接受了死亡，这份坦然让身边的人都由衷地敬佩。", statEffect:{luck:1}},
         {label:"把身体捐给义体研究", result:"你把身体捐给了义体研究，用自己的方式为废土的医疗事业留下了最后一份贡献。", statEffect:{health:-1,charm:1}}
       ]},
-      {death:true, text:"维系着你『生命』的核心数据在一次寻常的数据同步中突然湮灭，那个『你』就此彻底消失在了网络之中。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"核心湮灭"},
-      {text:"突破之后，你处理信息与破解系统的速度快得让同行都自认望尘莫及。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"wit")>=8},
+      {death:true, text:"维系着你『生命』的核心数据在一次寻常的数据同步中突然湮灭，那个『你』就此彻底消失在了网络之中。", weight:1, cond:c=>worldStateVal(c,"cyberpunk_breakthrough")>=1, cause:"核心湮灭"},
+      {text:"突破之后，你处理信息与破解系统的速度快得让同行都自认望尘莫及。", weight:6, cond:c=>worldStateVal(c,"cyberpunk_breakthrough")>=1 && stat(c,"wit")>=8},
       {text:"这些年技术共享的风气在废土上扎了根，你亲眼见证了越来越多据点因此活了下来。", weight:6, cond:c=>worldStateVal(c,"cyberpunk_wastelandInfluence")>=2},
       {text:"技术垂直垄断的格局始终没能打破，你看着弱小的据点一个个在资源匮乏中消亡，心里明白，这终究是竭泽而渔。", weight:6, cond:c=>worldStateVal(c,"cyberpunk_wastelandInfluence")<=-1}
     ]
@@ -4943,6 +5028,7 @@ const WORLD_EVENTS = {
       ], cond:c=>state.age<=1}
     ],
     youth:[
+      {choice:true, weight:6, text:"到了拜师学艺的年纪，三家铺子都愿意收你做学徒。", options:[{label:"进钟表铺", result:"你进了城里最讲究的钟表铺，那些精密齿轮把你的耐心和巧思都磨了出来。", statEffect:{wit:1}},{label:"进锅炉房", result:"你进了码头的锅炉房，日日挥汗如雨，练出了一身结实的筋骨。", statEffect:{power:1}},{label:"进飞艇码头", result:"你进了飞艇码头做地勤学徒，见惯了大场面，胆识与眼界都不一般。", statEffect:{luck:1}}]},
       {text:"你被镇上的机械工会看中，破格收为学徒，开始学习拆装各种精密仪器。", weight:10},
       {text:"你在一次课堂展示中，把老师布置的简单发条装置改装成了会跳舞的机械玩偶。", weight:8},
       {text:"你偶然结识了一个自称属于某秘密结社的老工匠，对方看你顺眼，教了你几手压箱底的机械绝活。", weight:6},
@@ -4960,6 +5046,9 @@ const WORLD_EVENTS = {
       {text:"你自幼睡在那具特制的机械摇篮里，对机械构造有种旁人没有的天然亲近感。", weight:6, cond:c=>hasFlag(c,"steampunk_mech_cradle"), statEffect:{wit:1}}
     ],
     adult:[
+      {text:"你在一场发明家聚会上夸下海口：要造出一台能载人飞出大气层的蒸汽方舟——满座哄笑，只有你自己是认真的。", weight:5, setFlag:"steampunk_quest1"},
+      {choice:true, weight:6, text:"你的学徒造出了一台谁也没见过的个人飞行器，兴冲冲地递上了试飞申请。", options:[{label:"亲自陪她完成首飞", result:"你亲自坐上了副驾陪她首飞，落地的那一刻，整个工坊的欢呼声掀翻了屋顶。", statEffect:{luck:1}, setFlag:"steampunk_apprentice"},{label:"批准单飞，地面守望", result:"你批准了单飞申请，自己在地面攥着望远镜守了全程——她飞得比你想象的还稳。", statEffect:{wit:1}},{label:"驳回申请，再改三稿", result:"你驳回了申请，逼着她把设计又改了三稿——后来她承认，第三稿救了她的命。", statEffect:{wit:1}}]},
+      {text:"你把自家工坊的蒸汽管道重新排布了一遍，效率提升之余，运转的声音也变得像一首规律的小步舞曲。", weight:6},
       {text:"你正式取得了工程师协会颁发的「持证机师」资格证，开始独立承接各类机械委托。", weight:10, achievement:"持证机师"},
       {text:"议会的一位大臣似乎对你的机械造诣格外忌惮，暗中派人打探你的底细。", weight:8},
       {text:"为你的一台发明申请专利时，你发现竟有人抢先注册了几乎一样的设计，一场官司随之而来。", weight:6},
@@ -4988,6 +5077,9 @@ const WORLD_EVENTS = {
       ]}
     ],
     prime:[
+      {text:"三十年的图纸、失败和债务之后，蒸汽方舟『信念号』终于矗立在了你的工坊后院——只差一次点火。", weight:12, cond:c=>hasFlag(c,"steampunk_quest1"), setFlag:"steampunk_quest2"},
+      {text:"一位环球飞行归来的老飞艇长信誓旦旦地说，他在极北的云层之上见过一座漂浮的黄金宫殿，殿前站着身披兽皮的持斧巨人。", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
+      {text:"你出资赞助的一届发明博览会大获成功，城里的报纸把你称作『点燃这座城市想象力的人』。", weight:6, cond:c=>stat(c,"wealth")>=8, statEffect:{charm:1}},
       {text:"你设计的一台全新型号飞艇引擎震惊了整个工程师协会，订单如雪片般飞来。", weight:10, achievement:"飞艇引擎大师"},
       {text:"你受邀加入了城市议会的技术顾问团，参与制定新一代基础设施的建造标准。", weight:8},
       {choice:true, weight:6, text:"城市就『工业化的红利该由资本方独享还是与工人共享』产生了分歧。", options:[
@@ -5009,6 +5101,10 @@ const WORLD_EVENTS = {
       {text:"你受邀成为发明家沙龙的常任主席，往后每一届聚会都由你来主持评选最佳发明。", weight:6, cond:c=>hasFlag(c,"steampunk_salon")}
     ],
     elder:[
+      {choice:true, weight:14, text:"『信念号』的锅炉已经预热完毕，全城的人都来围观这场『世纪笑话』——舱门开着，就看你敢不敢坐进去。", cond:c=>hasFlag(c,"steampunk_quest2"), options:[{label:"登舱，点火", riskyChance:0.4, lifespanBonus:12, successEffect:{wit:3,charm:3}, successResult:"轰鸣声中，『信念号』拖着长长的蒸汽尾迹刺破云层——当你从舷窗看到那颗蓝色星球的弧线时，全城的嘲笑声都变成了欢呼。", successAchievement:"毕生所求", failResult:"『信念号』在突破云层时解体了——人们在残骸里找到你时，你的手还握着操纵杆，嘴角带着笑。", failDeath:true, failDeathChance:0.32, failCause:"方舟解体", regressResult:"点火后第三分钟锅炉压力失控，你紧急迫降在了城外的麦田里——『信念号』烧成了骨架，你断了三根肋骨。", regressEffect:{health:-2,wealth:-2}},{label:"让无人配重舱先飞", result:"你放弃了亲自登舱，改用配重舱完成了首飞——『信念号』成功了，报纸却写道：『它的设计者没敢坐进去。』你不在乎。", statEffect:{wit:2}}]},
+      {choice:true, weight:30, repeatable:true, text:"核心置换多年后，那位发明家带来了她毕生的杰作——『发条不朽者』改造：将全身逐步替换为精密机械，成为真正意义上的不朽造物。", cond:c=>worldStateVal(c,"steampunk_breakthrough")===1 && state.age>=(hasTag(c,"transcendent")?54:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?3:5)), options:[{label:"接受发条不朽者改造", riskyChance:0.18, lifespanBonus:55, successEffect:{power:3,wit:3}, successResult:"改造成功——你听着自己胸腔里精密齿轮的滴答声，忽然明白了什么叫『时间在为你转动』。", successAchievement:"二度超脱", worldStateKey:"steampunk_breakthrough", worldStateDelta:1, failResult:"改造进行到最后一根主发条时出现了致命偏差，你所有的齿轮在同一瞬间停摆。", failDeath:true, failDeathChance:0.5, failCause:"齿轮停摆", regressResult:"改造中途被迫中止，你保住了性命，但半机械化的身体留下了永久的隐患。", regressEffect:{health:-3,power:-2}, regressLifespanPenalty:22},{label:"不再冒险，安享余生", result:"你决定不再挑战命运的极限，安然接受岁月本来的模样。", statEffect:{luck:1}}]},
+      {text:"你晚年把工坊改成了小小的展览馆，孩子们隔着玻璃看那些黄铜齿轮转动，眼睛亮得像星星。", weight:6},
+      {text:"当年那名你陪着完成首飞的学徒，如今已是皇家飞艇设计院的院长，她的成名作机翼上刻着你们两个人的名字。", weight:6, cond:c=>hasFlag(c,"steampunk_apprentice"), statEffect:{charm:1}},
       {text:"你把毕生的设计图纸整理成册，捐赠给了工程师协会的档案馆，供后人学习钻研。", weight:10},
       {text:"你在自家工坊里安享晚年，时常有慕名而来的年轻学徒登门求教。", weight:8},
       {text:"你把那台自己组装的第一台自动人偶重新翻新了一遍，摆在工坊最显眼的位置，当作对年轻时光的纪念。", weight:6},
@@ -5017,10 +5113,10 @@ const WORLD_EVENTS = {
       {text:"你晚年时常去看蒸汽赛车比赛，虽然不再亲自下场，眼神里的热情却丝毫未减。", weight:6},
       {text:"你把自己参与设计铁路建设的全部图纸和心得整理成册，捐赠给了城市档案馆。", weight:6, cond:c=>hasFlag(c,"steampunk_railway")},
       {text:"你晚年时常受邀出席发明家沙龙的纪念活动，虽然不再亲自发明，眼神里的热忱却丝毫未减。", weight:6, cond:c=>hasFlag(c,"steampunk_salon")},
-      {choice:true, weight:5, repeatable:true, text:"一位神秘的发明家提出为你置换一颗改良型蒸汽核心，或许能让你的身体重新运转起来——但置换手术风险不小。", cond:c=>state.age>=(hasTag(c,"transcendent")?50:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
-        {label:"冒险接受核心置换", riskyChance:0.25, lifespanBonus:20, successEffect:{power:10,wit:4,health:2},
-         successResult:"核心置换在生死边缘完成了，崭新的蒸汽核心让你的身体重新焕发出了活力，手脚也比从前灵便了不少。", successAchievement:"突破天命",
-         failResult:"置换过程中核心骤然过载爆炸，你甚至没能来得及喊出一声。", failDeath:true, failDeathChance:0.6, failCause:"核心过载",
+      {choice:true, weight:5, repeatable:true, text:"一位神秘的发明家提出为你置换一颗改良型蒸汽核心，或许能让你的身体重新运转起来——但置换手术风险不小。", cond:c=>state.age>=(hasTag(c,"transcendent")?51:54) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?7:10)), options:[
+        {label:"冒险接受核心置换", riskyChance:0.35, lifespanBonus:35, successEffect:{power:10,wit:4,health:2},
+         successResult:"核心置换在生死边缘完成了，崭新的蒸汽核心让你的身体重新焕发出了活力，手脚也比从前灵便了不少。", successAchievement:"突破天命", worldStateKey:"steampunk_breakthrough", worldStateDelta:1,
+         failResult:"置换过程中核心骤然过载爆炸，你甚至没能来得及喊出一声。", failDeath:true, failDeathChance:0.5, failCause:"核心过载",
          regressResult:"置换过程中核心骤然过载，你侥幸没有被炸得粉身碎骨，只是这具身体从此落下了挥之不去的隐患。", regressEffect:{power:-2,health:-2}, regressLifespanPenalty:5},
         {label:"只进行保养式微调", riskyChance:0.75, lifespanBonus:8,
          successResult:"你只进行了保守的保养式微调，效果有限，却也稳妥地延长了几年寿命。",
@@ -5032,8 +5128,8 @@ const WORLD_EVENTS = {
         {label:"捐给工程师协会公开", result:"你把图纸捐给了工程师协会公开，希望能有更多人在此基础上继续钻研。", statEffect:{wit:1}},
         {label:"带进坟墓，谁也不给", result:"你选择把这份图纸带进坟墓，谁也不给——有些秘密，你想留给自己。", statEffect:{luck:1}}
       ]},
-      {death:true, text:"置换的那颗蒸汽核心终究撑不住经年累月的运转，在某个寻常的清晨悄然停摆，带走了你的生命。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"核心衰竭"},
-      {text:"突破之后，你对机械构造的理解已经近乎直觉，随手一摆弄就能看出零件里藏着的毛病。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"wit")>=8},
+      {death:true, text:"置换的那颗蒸汽核心终究撑不住经年累月的运转，在某个寻常的清晨悄然停摆，带走了你的生命。", weight:1, cond:c=>worldStateVal(c,"steampunk_breakthrough")>=1, cause:"核心衰竭"},
+      {text:"突破之后，你对机械构造的理解已经近乎直觉，随手一摆弄就能看出零件里藏着的毛病。", weight:6, cond:c=>worldStateVal(c,"steampunk_breakthrough")>=1 && stat(c,"wit")>=8},
       {text:"这些年工业化的红利渐渐流向了普通工人，你亲眼见证了这座城市因此变得更加繁荣安定。", weight:6, cond:c=>worldStateVal(c,"steampunk_cityInfluence")>=2},
       {text:"工业化的红利始终被少数人独享，你看着城市里的贫富差距越拉越大，心里明白，这终究埋下了动荡的种子。", weight:6, cond:c=>worldStateVal(c,"steampunk_cityInfluence")<=-1}
     ]
@@ -5056,6 +5152,7 @@ const WORLD_EVENTS = {
       ], cond:c=>state.age===0}
     ],
     youth:[
+      {choice:true, weight:6, text:"营地按特长重新分工，管事的问你想去哪一组。", options:[{label:"加入侦察队", result:"你加入了外出的侦察队，练出了一身在废墟间穿行的好本事，也攒下了几分乱世里的运气。", statEffect:{luck:1}},{label:"加入种植园", result:"你加入了营地的种植园，日出而作，日落而息，身体反倒比末世前更结实了。", statEffect:{health:1}},{label:"加入瞭望塔", result:"你上了瞭望塔做观察员，练就了一双从蛛丝马迹里读出危险的眼睛。", statEffect:{wit:1}}]},
       {text:"你被幸存者营地选中，加入了少年侦察队，学习如何在废墟中安静地行动。", weight:10},
       {text:"你在一次物资搜寻任务中，独自应对了一只丧尸的偷袭，全须全尾地回到了营地。", weight:8},
       {text:"你在一次物资争夺中侥幸活了下来，也第一次真切地感受到了幸存者之间同样残酷的竞争。", weight:6},
@@ -5073,6 +5170,9 @@ const WORLD_EVENTS = {
       {text:"当年那剂试验疫苗似乎起了作用，你对病毒感染的抵抗力明显强于同龄的孩子。", weight:6, cond:c=>hasFlag(c,"zombie_early_vaccine"), statEffect:{health:1}}
     ],
     adult:[
+      {text:"一个弥留的旅人向你描述了『净土』——一片病毒从未触及的山谷，有溪流、麦田和不用设岗哨的夜晚。所有人都说那是临终的呓语，你却记了下来。", weight:5, setFlag:"zombie_quest1"},
+      {choice:true, weight:6, text:"巡逻时你发现一名被咬伤却迟迟没有变异的幸存者，蜷在废车底下发抖。", options:[{label:"带回营地隔离观察", result:"你顶着队友的反对把他带回了隔离区观察——七天过去，他依然是人。", statEffect:{charm:1}, setFlag:"zombie_immune"},{label:"留下补给，远远指路", result:"你留下了一份补给，远远给他指了另一处营地的方向——各安天命吧。", statEffect:{luck:1}},{label:"鸣枪驱离", result:"你朝天鸣了一枪把他驱离了——规矩就是规矩，被咬就是被咬。", statEffect:{power:1}}]},
+      {text:"你在废墟里翻出了一台还能用的老式留声机，那晚整个营地围着它安静地听了一夜旧世界的歌。", weight:6},
       {text:"你正式成为营地的核心战斗员，肩负起了每一次外出搜寻任务的安全重任。", weight:10, achievement:"核心战斗员"},
       {text:"营地里流传着一种未知变异丧尸的消息，所有人都隐隐觉得这与你有关。", weight:8},
       {text:"你曾经信任的一位幸存者伙伴，为了自己活命而出卖了整支队伍，你侥幸逃过一劫，却也从此不再轻信旁人。", weight:6, setFlag:"zombie_betrayal"},
@@ -5100,6 +5200,9 @@ const WORLD_EVENTS = {
       ]}
     ],
     prime:[
+      {text:"多年来你比对了上百条线索，『净土』的位置在地图上收敛成了一个小小的圆圈——穿过三百公里的重感染区就能抵达。", weight:12, cond:c=>hasFlag(c,"zombie_quest1"), setFlag:"zombie_quest2"},
+      {text:"你在一座废弃实验室的研究日志里读到一行奇怪的记录：『样本对灵气浓度的变化表现出显著应激反应』——灵气？这个词在末世的实验室里显得无比突兀。", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
+      {text:"你连续三年没有生过一场大病，营地的医生半开玩笑地说要抽你的血样好好研究研究。", weight:6, cond:c=>stat(c,"health")>=8, statEffect:{health:1}},
       {text:"你带队清剿了盘踞在城郊多年的丧尸巢穴，为营地扩张争取到了宝贵的空间。", weight:10, achievement:"巢穴清剿者"},
       {text:"你建立起了一套完整的哨戒体系，让营地的夜晚第一次有了真正意义上的安宁。", weight:8},
       {choice:true, weight:6, text:"营地联盟就『物资该集中调配还是各营地自治』产生了分歧。", options:[
@@ -5125,6 +5228,10 @@ const WORLD_EVENTS = {
       ]}
     ],
     elder:[
+      {choice:true, weight:14, text:"营地里愿意跟你走的有三十七个人——三百公里的重感染区横在面前，是带他们去赌那个传说，还是让传说继续只是传说？", cond:c=>hasFlag(c,"zombie_quest2"), options:[{label:"带队穿越感染区", riskyChance:0.42, lifespanBonus:15, successEffect:{charm:4,luck:2}, successResult:"第十九天的黎明，走在最前面的孩子突然停住了脚步——山谷里，真的有溪流，有野麦，有一整片没有嘶吼声的寂静。有人跪下来哭了，你只是回头数了数：三十七个，一个不少。", successAchievement:"毕生所求", failResult:"感染区的规模远超所有情报——你把最后一发信号弹交给队伍里最年轻的人，独自引开了尸潮。", failDeath:true, failDeathChance:0.32, failCause:"引开尸潮", regressResult:"穿越在第九天被迫中止，你们退回了营地，减员四人——此后再没有人提起净土，包括你。", regressEffect:{charm:-1,health:-2}},{label:"只把地图传下去", result:"你把毕生整理的地图交给了营地档案室，附了一句话：『等世界再好一点，替我去看看。』", statEffect:{wit:1,charm:1}}]},
+      {choice:true, weight:30, repeatable:true, text:"血清之后，研究员提出了最疯狂的设想——『共生计划』：主动引入弱化病毒与你的免疫系统共生，理论上能获得感染者的生命力而不失去人性。", cond:c=>worldStateVal(c,"zombie_breakthrough")===1 && state.age>=(hasTag(c,"transcendent")?50:56) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?3:5)), options:[{label:"接受病毒共生", riskyChance:0.15, lifespanBonus:40, successEffect:{power:3,health:3}, successResult:"共生成功——病毒与你的身体达成了微妙的平衡，你获得了远超常人的生命力，眼睛在黑暗中会泛起微光，但你还是你。", successAchievement:"二度超脱", worldStateKey:"zombie_breakthrough", worldStateDelta:1, failResult:"共生在第七天失控，你在意识彻底消散前，请战友对你扣下了扳机。", failDeath:true, failDeathChance:0.6, failCause:"共生失败", regressResult:"共生失败被紧急清除，你保住了人性，但免疫系统遭受重创。", regressEffect:{health:-4}, regressLifespanPenalty:18},{label:"不再冒险，安享余生", result:"你决定不再挑战命运的极限，安然接受岁月本来的模样。", statEffect:{luck:1}}]},
+      {text:"你在营地的墙上画满了旧世界的城市天际线，年轻人总爱指着问，哪一栋楼里有过你的故事。", weight:6},
+      {text:"当年那名被你带回的幸存者体内的抗体，最终成了血清研究的关键突破口——营地的医生说，你那天的决定救了后来的所有人。", weight:6, cond:c=>hasFlag(c,"zombie_immune"), statEffect:{luck:1}},
       {text:"你把这些年摸索出的求生经验编写成册，成为新一代幸存者人手一份的生存手册。", weight:10},
       {text:"你在自己一手建起的安全区里安享晚年，看着当年的废墟渐渐重新长出了绿意。", weight:8},
       {text:"以你血液为基础研发的疫苗如今已经推广开来，你从没想过自己会以这种方式『拯救』了这么多人。", weight:6, cond:c=>hasFlag(c,"zombie_bloodtype")},
@@ -5133,14 +5240,14 @@ const WORLD_EVENTS = {
       {text:"你把自己关于旧世界的记忆一点一点讲给了孩子们，成了营地里活着的历史书。", weight:6, cond:c=>hasFlag(c,"zombie_flashback")},
       {text:"你把自己主持广播站这些年积累的经验记录下来，交给了接替你的年轻播音员。", weight:6, cond:c=>hasFlag(c,"zombie_broadcast")},
       {text:"你晚年时常想起当年那场关于物资分配的讨论，觉得那或许是自己这一生做得最有意义的一件事。", weight:6, cond:c=>hasFlag(c,"zombie_debate")},
-      {choice:true, weight:5, repeatable:true, text:"营地的科研人员提出了两套截然不同的延寿方案——一套是注射尚在实验阶段的特殊血清，另一套是尝试连接感染者的集体潜意识、以虫群思维的方式续命，两者的副作用都完全未知。", cond:c=>state.age>=(hasTag(c,"transcendent")?50:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
-        {label:"冒险注射实验血清", riskyChance:0.25, lifespanBonus:20, successEffect:{power:10,health:4,luck:2},
-         successResult:"血清在你体内发挥出了惊人的效果，你的身体状况大幅改善，力量与耐力都远超从前，寿命也因此大大延长。", successAchievement:"突破天命",
-         failResult:"血清的副作用瞬间爆发，你的身体机能急速崩溃，抢救都来不及。", failDeath:true, failDeathChance:0.6, failCause:"血清崩溃",
+      {choice:true, weight:5, repeatable:true, text:"营地的科研人员提出了两套截然不同的延寿方案——一套是注射尚在实验阶段的特殊血清，另一套是尝试连接感染者的集体潜意识、以虫群思维的方式续命，两者的副作用都完全未知。", cond:c=>state.age>=(hasTag(c,"transcendent")?51:52) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?7:10)), options:[
+        {label:"冒险注射实验血清", riskyChance:0.3, lifespanBonus:30, successEffect:{power:10,health:4,luck:2},
+         successResult:"血清在你体内发挥出了惊人的效果，你的身体状况大幅改善，力量与耐力都远超从前，寿命也因此大大延长。", successAchievement:"突破天命", worldStateKey:"zombie_breakthrough", worldStateDelta:1,
+         failResult:"血清的副作用瞬间爆发，你的身体机能急速崩溃，抢救都来不及。", failDeath:true, failDeathChance:0.65, failCause:"血清崩溃",
          regressResult:"血清的副作用瞬间爆发，你侥幸没有当场崩溃，只是这具身体从此落下了难以恢复的病根。", regressEffect:{power:-2,health:-2}, regressLifespanPenalty:5},
-        {label:"尝试连接感染者的集体潜意识", riskyChance:0.25, lifespanBonus:20, successEffect:{wit:10,luck:4,charm:2},
-         successResult:"你的意识与那片庞大的感染者集体潜意识彻底连接，仿佛化身为虫群思维的一部分，你的『生命』以一种诡异却真实的方式延续下去，对危险的感知也变得异常敏锐。", successAchievement:"突破天命",
-         failResult:"集体意识的浪潮瞬间将你的自我意识彻底吞没，你的身体虽然还在，那个『你』却再也没有回来。", failDeath:true, failDeathChance:0.6, failCause:"意识吞噬",
+        {label:"尝试连接感染者的集体潜意识", riskyChance:0.3, lifespanBonus:30, successEffect:{wit:10,luck:4,charm:2},
+         successResult:"你的意识与那片庞大的感染者集体潜意识彻底连接，仿佛化身为虫群思维的一部分，你的『生命』以一种诡异却真实的方式延续下去，对危险的感知也变得异常敏锐。", successAchievement:"突破天命", worldStateKey:"zombie_breakthrough", worldStateDelta:1,
+         failResult:"集体意识的浪潮瞬间将你的自我意识彻底吞没，你的身体虽然还在，那个『你』却再也没有回来。", failDeath:true, failDeathChance:0.65, failCause:"意识吞噬",
          regressResult:"集体意识的浪潮几乎将你的自我意识彻底吞没，你侥幸把自己拉了回来，只是精神大受损耗，往后总觉得脑子里嗡嗡作响。", regressEffect:{wit:-2,luck:-1}, regressLifespanPenalty:5},
         {label:"只注射稀释后的低剂量", riskyChance:0.75, lifespanBonus:8,
          successResult:"你只注射了稀释后的低剂量血清，效果有限，却也稳妥地延长了几年寿命。",
@@ -5152,8 +5259,8 @@ const WORLD_EVENTS = {
         {label:"反对，一切从简", result:"你坚持一切从简，不想给活着的人添麻烦，这份朴素让人心生敬意。", statEffect:{luck:1}},
         {label:"提议把仪式变成一场生存技巧传授课", result:"你提议把这场仪式变成最后一堂生存技巧课，把毕生所学再教一遍给年轻人。", statEffect:{wit:1}}
       ]},
-      {death:true, text:"当年那剂血清（或那次连接）留下的隐患终于迟发，你的身体在一夜之间彻底衰竭，没能等到天亮。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"副作用迟发"},
-      {text:"突破之后，你的身体状态好得不像话，队友们都说你简直不像是这个末世里该有的样子。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"power")>=8},
+      {death:true, text:"当年那剂血清（或那次连接）留下的隐患终于迟发，你的身体在一夜之间彻底衰竭，没能等到天亮。", weight:1, cond:c=>worldStateVal(c,"zombie_breakthrough")>=1, cause:"副作用迟发"},
+      {text:"突破之后，你的身体状态好得不像话，队友们都说你简直不像是这个末世里该有的样子。", weight:6, cond:c=>worldStateVal(c,"zombie_breakthrough")>=1 && stat(c,"power")>=8},
       {text:"这些年物资集中调配的制度救了不少营地，你亲眼见证了这片末世废墟里难得的团结。", weight:6, cond:c=>worldStateVal(c,"zombie_campInfluence")>=2},
       {text:"各营地始终各自为政，你看着弱小的营地一个个在资源匮乏中崩溃，心里明白，这终究是一盘散沙。", weight:6, cond:c=>worldStateVal(c,"zombie_campInfluence")<=-1}
     ]
@@ -5176,6 +5283,7 @@ const WORLD_EVENTS = {
       ], cond:c=>state.age<=1}
     ],
     youth:[
+      {choice:true, weight:6, text:"到了自己挣饭钱的年纪，镇上有三份活计等着你挑。", options:[{label:"去驿站当马夫", result:"你去驿站当了马夫，风吹日晒之间，身子骨结实得像头小牛。", statEffect:{health:1}},{label:"去酒馆做帮工", result:"你去酒馆做了帮工，见惯了南来北往的旅人，练出了一张能说会道的嘴。", statEffect:{charm:1}},{label:"去矿上做学徒", result:"你去矿上做了学徒，抡镐的日子苦是苦，一身力气却是实打实的。", statEffect:{power:1}}]},
       {text:"你在镇上的靶场里第一次摸到手枪，教官说你的手感好得不像个新手。", weight:10},
       {text:"你在一次镇上的骚乱中，冷静地帮着大人疏散了受惊的孩子，被镇长记在了心里。", weight:8},
       {text:"你在一次意外中救了一位路过的印第安少年，对方的部落从此对你多了几分善意与信任。", weight:6, setFlag:"westworld_tribe_bond"},
@@ -5193,6 +5301,9 @@ const WORLD_EVENTS = {
       {text:"你自幼被当成半个猎人来养，在荒野求生的本事上比同龄孩子扎实得多。", weight:6, cond:c=>hasFlag(c,"westworld_survivalist"), statEffect:{power:1}}
     ],
     adult:[
+      {text:"一个醉醺醺的老矿工用半瓶威士忌换你听一个故事——峡谷深处有一座『黄金城』，西班牙人两百年前藏起来的，他见过入口，但没敢进去。", weight:5, setFlag:"westworld_quest1"},
+      {choice:true, weight:6, text:"铁路公司开出了一个令人心动的价格，要收购你家那块祖传的地。", options:[{label:"卖掉，落袋为安", result:"你签了字，铁路公司的支票厚得能压弯口袋——这片草场，往后只在梦里见了。", statEffect:{wealth:2}},{label:"死守祖地，寸土不让", result:"你把合同原样退了回去，在栅栏上加了道锁——有些东西，多少钱都不卖。", statEffect:{power:1}, setFlag:"westworld_land"},{label:"联合邻居们抬价谈判", result:"你挨家挨户串联邻居们抱团谈判，最后大伙都多拿了三成的价钱。", statEffect:{charm:1}}]},
+      {text:"你养的那匹老马认得回家的每一条路，有几次你在马背上睡着了，醒来时已经稳稳停在自家门口。", weight:6},
       {text:"你正式领到了赏金猎人执照，开始在这片荒芜的大陆上追捕悬赏名单上的通缉犯。", weight:10, achievement:"赏金猎人"},
       {text:"铁路公司的一位工头似乎对你颇为忌惮，暗中雇了人想要找你的麻烦。", weight:8},
       {text:"你被悬赏令误标成了通缉犯，费了好大力气才在赏金猎人的围捕中证明了自己的清白。", weight:6},
@@ -5219,6 +5330,9 @@ const WORLD_EVENTS = {
       ]}
     ],
     prime:[
+      {text:"多年的勘探让你在峡谷深处真的找到了那道被藤蔓掩盖的石门——门后的黑暗深不见底，门楣上刻着西班牙语：『贪婪者止步』。", weight:12, cond:c=>hasFlag(c,"westworld_quest1"), setFlag:"westworld_quest2"},
+      {text:"篝火边，一位老牛仔说他年轻时在峡谷深处见过一扇凭空立着的门——门里是白天，门外是黑夜。他这辈子都在后悔没敢走进去。", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
+      {text:"你在镇上的射击大赛上连中十靶，庄家赔得脸色发白，从此再没人敢在你面前提『比划两下』。", weight:6, cond:c=>stat(c,"power")>=8, statEffect:{charm:1}},
       {text:"你在一场惊心动魄的决斗中击败了赏金榜上排名第一的悬赏犯，声名传遍了整片大陆。", weight:10, achievement:"决斗之王"},
       {text:"你出资帮小镇修建了第一条像样的水渠，镇民们都说你是这片土地上的活菩萨。", weight:8},
       {choice:true, weight:6, text:"小镇就『铁路带来的发展该由镇民共享还是任由资本掠夺』产生了分歧。", options:[
@@ -5239,6 +5353,10 @@ const WORLD_EVENTS = {
       {text:"你在铁匠铺的手艺日渐精湛，打造的武器渐渐在整片西部小有名气，不少枪手专程前来求购。", weight:6, cond:c=>hasFlag(c,"westworld_smithy")}
     ],
     elder:[
+      {choice:true, weight:14, text:"补给、绳索、火把都已备齐，石门就在面前——两百年来无数人为这个传说而死，如今轮到你做选择了。", cond:c=>hasFlag(c,"westworld_quest2"), options:[{label:"推门，深入黄金城", riskyChance:0.4, lifespanBonus:12, successEffect:{wealth:4,luck:2}, successResult:"穿过最后一道石廊，火把的光落在了满室的金锭上——传说是真的。你只取了背囊装得下的部分，把石门重新封好：让传说继续活着。", successAchievement:"毕生所求", failResult:"石门在你身后轰然关闭的那一刻，你就明白了门楣上那行字的意思——峡谷从此多了一个没能回来的名字。", failDeath:true, failDeathChance:0.32, failCause:"困死密道", regressResult:"地道在半途坍塌，你死里逃生地爬了出来——入口被彻底掩埋，这辈子是再也找不到第二次了。", regressEffect:{health:-2,wealth:-1}},{label:"把线索卖给勘探公司", result:"你把石门的位置卖给了东部来的勘探公司，拿钱置了地——半年后听说他们的挖掘队全军覆没，你没再打听。", statEffect:{wealth:2}}]},
+      {choice:true, weight:30, repeatable:true, text:"那位巫医临终前把你叫到床边，传授了他真正压箱底的秘仪——『与大地缔约』：让灵魂扎根在这片土地里，与山川同寿。", cond:c=>worldStateVal(c,"westworld_breakthrough")===1 && state.age>=(hasTag(c,"transcendent")?60:66) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?3:5)), options:[{label:"举行大地缔约仪式", riskyChance:0.12, lifespanBonus:40, successEffect:{luck:3,health:2}, successResult:"缔约成功——你能感觉到自己的心跳与这片土地的脉动渐渐同步，镇上的人都说，你成了这片荒野真正的守望者。", successAchievement:"二度超脱", worldStateKey:"westworld_breakthrough", worldStateDelta:1, failResult:"仪式进行到一半，大地拒绝了你的灵魂，你被反噬的力量当场带走。", failDeath:true, failDeathChance:0.55, failCause:"仪式反噬", regressResult:"仪式失败，你侥幸捡回一条命，只是从此再难承受第二次尝试。", regressEffect:{health:-3,luck:-2}, regressLifespanPenalty:20},{label:"不再冒险，安享余生", result:"你决定不再挑战命运的极限，安然接受岁月本来的模样。", statEffect:{luck:1}}]},
+      {text:"你在门廊的摇椅上度过了无数个黄昏，那把猎枪早就不上膛了，只是习惯放在手边。", weight:6},
+      {text:"当年你死守下来的那块地，如今成了镇上最后一片没被铁轨切开的完整草场，晚霞落在上面的时候，全镇的人都爱来散步。", weight:6, cond:c=>hasFlag(c,"westworld_land"), statEffect:{charm:1}},
       {text:"你把自己多年闯荡积累的经验写成了一本小册子，成了后辈赏金猎人争相传抄的教材。", weight:10},
       {text:"你在自家牧场的摇椅上悠闲地晒着太阳，偶尔给孙辈讲讲当年的枪战故事。", weight:8},
       {text:"你受邀参加了那个印第安部落的篝火盛会，围坐在火堆旁，听着年轻人复述你当年的英勇事迹。", weight:6, cond:c=>hasFlag(c,"westworld_tribe_bond")},
@@ -5247,9 +5365,9 @@ const WORLD_EVENTS = {
       {text:"你受邀成为牛仔竞技会的终身荣誉评委，每年都要亲自到场为年轻选手们喝彩。", weight:6},
       {text:"你把自己这些年担任治安官积累的经验写成了小册子，成了后辈治安官的参考教材。", weight:6, cond:c=>hasFlag(c,"westworld_fort")},
       {text:"你把自己打铁的手艺毫无保留地传给了镇上的年轻人，看着炉火依旧旺盛，心里满是感慨。", weight:6, cond:c=>hasFlag(c,"westworld_smithy")},
-      {choice:true, weight:5, repeatable:true, text:"一位印第安巫医提出为你举行一场神秘的续命仪式，据说这仪式曾让部落里的长老多活了数十年——但仪式本身凶险异常。", cond:c=>state.age>=(hasTag(c,"transcendent")?50:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
-        {label:"参加凶险的续命仪式", riskyChance:0.25, lifespanBonus:20, successEffect:{power:10,luck:4,health:2},
-         successResult:"仪式在生死边缘完成了，巫医口中的『大地馈赠』真的延续了你的生命，浑身也涌动着一股说不清的野性力量。", successAchievement:"突破天命",
+      {choice:true, weight:5, repeatable:true, text:"一位印第安巫医提出为你举行一场神秘的续命仪式，据说这仪式曾让部落里的长老多活了数十年——但仪式本身凶险异常。", cond:c=>state.age>=(hasTag(c,"transcendent")?55:62) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
+        {label:"参加凶险的续命仪式", riskyChance:0.22, lifespanBonus:30, successEffect:{power:10,luck:4,health:2},
+         successResult:"仪式在生死边缘完成了，巫医口中的『大地馈赠』真的延续了你的生命，浑身也涌动着一股说不清的野性力量。", successAchievement:"突破天命", worldStateKey:"westworld_breakthrough", worldStateDelta:1,
          failResult:"仪式中途出了岔子，你的心跳在众人的祈祷声中彻底停了下来。", failDeath:true, failDeathChance:0.6, failCause:"仪式失败",
          regressResult:"仪式中途出了岔子，你的心跳侥幸没有彻底停下，只是这具身子骨从此大不如前，往日的枪法与身手都生疏了不少。", regressEffect:{power:-2,health:-2}, regressLifespanPenalty:5},
         {label:"只接受温和的草药疗法", riskyChance:0.75, lifespanBonus:8,
@@ -5262,8 +5380,8 @@ const WORLD_EVENTS = {
         {label:"只写豪言壮语，图个痛快", result:"你选择了只写几句豪言壮语，图个痛快，倒是很符合你这一辈子的性子。", statEffect:{power:1}},
         {label:"什么都不写，一块光碑", result:"你什么都没让人写，一块光碑立在那儿，反倒让人多了几分猜想的余地。", statEffect:{luck:1}}
       ]},
-      {death:true, text:"那场续命仪式留下的隐患终于在某个寻常的夜晚发作，你在睡梦中悄然离世，没有惊动任何人。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"仪式隐患"},
-      {text:"突破之后，你的枪法与身手快得让镇上最好的枪手都自认不是对手。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"power")>=8},
+      {death:true, text:"那场续命仪式留下的隐患终于在某个寻常的夜晚发作，你在睡梦中悄然离世，没有惊动任何人。", weight:1, cond:c=>worldStateVal(c,"westworld_breakthrough")>=1, cause:"仪式隐患"},
+      {text:"突破之后，你的枪法与身手快得让镇上最好的枪手都自认不是对手。", weight:6, cond:c=>worldStateVal(c,"westworld_breakthrough")>=1 && stat(c,"power")>=8},
       {text:"这些年铁路带来的繁荣真正惠及了镇民，你亲眼见证了这座小镇因此蒸蒸日上。", weight:6, cond:c=>worldStateVal(c,"westworld_townInfluence")>=2},
       {text:"铁路带来的红利始终被资本攫取，你看着镇民的日子越过越艰难，心里明白，这终究不是长久之计。", weight:6, cond:c=>worldStateVal(c,"westworld_townInfluence")<=-1}
     ]
@@ -5286,6 +5404,7 @@ const WORLD_EVENTS = {
       ], cond:c=>state.age<=1}
     ],
     youth:[
+      {choice:true, weight:6, text:"觉醒后的第一堂课，导师让你自己选训练的侧重。", options:[{label:"侧重控制训练", result:"你选择了枯燥的控制训练，如今你的异能收放自如，精细得能夹起一粒米。", statEffect:{wit:1}},{label:"侧重体能强化", result:"你选择了体能强化，异能与肉身相辅相成，爆发力今非昔比。", statEffect:{power:1}},{label:"侧重隐匿练习", result:"你选择了隐匿练习，学会了在人群中把自己藏得像个最普通的路人。", statEffect:{luck:1}}]},
       {text:"你在一次体育课上意外展现出远超常人的反应速度，被班主任悄悄记录了下来。", weight:10},
       {text:"你结识了班上一个同样有些「奇怪」的同学，两人一拍即合，成了无话不谈的朋友。", weight:8},
       {text:"你逐渐发现自己的能力似乎伴随着某种说不清的副作用，每次使用后总要付出点小小的代价。", weight:6},
@@ -5303,6 +5422,9 @@ const WORLD_EVENTS = {
       {text:"当年那次早期筛查的记录，让你比其他新觉醒者更早明白了自己能力的边界。", weight:6, cond:c=>hasFlag(c,"urbanpower_early_screen"), statEffect:{wit:1}}
     ],
     adult:[
+      {text:"你在调查中发现所有觉醒者的能力波形都指向同一个源头——三十年前官方档案里被涂黑的『零号事件』。", weight:5, setFlag:"urbanpower_quest1"},
+      {choice:true, weight:6, text:"深夜，一名濒临失控边缘的新觉醒者辗转找到你，声音发抖地向你求助。", options:[{label:"亲自陪她度过失控期", result:"你陪着她熬过了最凶险的七十二小时，失控的能量在你的引导下一点点平复了下来。", statEffect:{charm:1}, setFlag:"urbanpower_mentee"},{label:"转介给专业互助机构", result:"你连夜联系了互助中心，把她安全地转介了过去——专业的事交给专业的人。", statEffect:{wit:1}},{label:"隔着门给些建议", result:"你隔着门给了她几条保命的建议——失控者太危险，你有你的顾虑。", statEffect:{luck:1}}]},
+      {text:"你学会了在通勤的地铁上用异能悄悄托住打瞌睡乘客歪倒的脑袋，这是只属于你一个人的小小善举。", weight:6},
       {text:"你正式加入了一个地下的异能者互助组织，第一次见到了和自己一样的「异类」。", weight:10, achievement:"觉醒者同盟"},
       {text:"某个神秘组织的人似乎盯上了你的能力，开始暗中调查你的行踪。", weight:8},
       {text:"你那个能力副作用忽然在一次关键时刻发作，差点让你在众人面前暴露了身份。", weight:6},
@@ -5329,6 +5451,9 @@ const WORLD_EVENTS = {
       ]}
     ],
     prime:[
+      {text:"半生的追查让零号事件的轮廓渐渐清晰——那是一次失败的实验，而实验体『零号』据说至今仍被封存在城市地下最深处。", weight:12, cond:c=>hasFlag(c,"urbanpower_quest1"), setFlag:"urbanpower_quest2"},
+      {text:"你的异能在某个雨夜突然与什么东西共振了一瞬——那一刻，你仿佛看见无数个平行的城市在眼前展开又合拢，每一座城里都有一个你。", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
+      {text:"你总结的异能控制心法在觉醒者圈子里广为流传，不少新人都尊称你一声『前辈』。", weight:6, cond:c=>stat(c,"wit")>=8, statEffect:{charm:1}},
       {text:"你在一次城市危机中挺身而出，力挽狂澜，事后却选择隐姓埋名，不愿暴露身份。", weight:10, achievement:"无名英雄"},
       {text:"你建立起了一个专门帮助新觉醒者适应能力的互助中心，成了这个圈子里德高望重的前辈。", weight:8},
       {choice:true, weight:6, text:"觉醒者圈子就『异能资源该公开培训还是把持在少数人手中』产生了分歧。", options:[
@@ -5349,6 +5474,10 @@ const WORLD_EVENTS = {
       {text:"你彻底揭开了那间异能实验室的秘密，并将其公之于众，推动了这个圈子的一次重大变革。", weight:6, cond:c=>hasFlag(c,"urbanpower_lab_nearby")}
     ],
     elder:[
+      {choice:true, weight:14, text:"你找到了通往地下封存设施的入口——见到零号，你就能知道所有觉醒者存在的意义，或者成为下一个被涂黑的名字。", cond:c=>hasFlag(c,"urbanpower_quest2"), options:[{label:"深入设施，面见零号", riskyChance:0.4, lifespanBonus:12, successEffect:{wit:4,charm:2}, successResult:"零号原来只是一个睡着的孩子——她睁开眼看到你的瞬间，你脑海里涌入了一切真相。你替她掖好被角，转身把真相写成了匿名档案，寄给了每一个觉醒者。", successAchievement:"毕生所求", failResult:"设施的防御机制在你触碰封存舱的瞬间启动——官方档案里，又多了一个被涂黑的名字。", failDeath:true, failDeathChance:0.32, failCause:"设施防御", regressResult:"你在最后一道闸门前触发了警报，被迫撤离——设施随即整体迁移，线索彻底断了。", regressEffect:{wit:-1,luck:-2}},{label:"把调查交给觉醒者联盟", result:"你把毕生的调查资料交给了觉醒者联盟——真相也许会迟到，但一个人的执念，从此成了一群人的事业。", statEffect:{charm:2}}]},
+      {choice:true, weight:30, repeatable:true, text:"二次觉醒之后，你隐约触摸到了第三道门槛——彻底舍弃血肉之躯的桎梏，让自己升华为纯粹的灵能存在体。", cond:c=>worldStateVal(c,"urbanpower_breakthrough")===1 && state.age>=(hasTag(c,"transcendent")?54:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?3:5)), options:[{label:"尝试三次觉醒", riskyChance:0.18, lifespanBonus:60, successEffect:{wit:3,charm:3}, successResult:"觉醒成功——你的身体如今由稳定的灵能构成，衰老、疾病、饥饿都成了过去式，你成了这座城市的都市传说本身。", successAchievement:"二度超脱", worldStateKey:"urbanpower_breakthrough", worldStateDelta:1, failResult:"第三次觉醒失控，你的存在如烟花般绚烂地溃散在了城市上空。", failDeath:true, failDeathChance:0.52, failCause:"灵能溃散", regressResult:"觉醒中途被强行压回，你保住了肉身，但异能出现了长期的紊乱。", regressEffect:{wit:-3,power:-2}, regressLifespanPenalty:22},{label:"不再冒险，安享余生", result:"你决定不再挑战命运的极限，安然接受岁月本来的模样。", statEffect:{luck:1}}]},
+      {text:"你晚年最爱在天台上用异能给邻居家的孩子们变些无伤大雅的小戏法，成了整栋楼口耳相传的传说。", weight:6},
+      {text:"当年被你从失控边缘拉回来的那名觉醒者，如今成了互助中心的负责人，她说她带的每一个新人，都算是你的徒孙。", weight:6, cond:c=>hasFlag(c,"urbanpower_mentee"), statEffect:{charm:1}},
       {text:"你把自己多年来对异能的研究心得整理成册，秘密传给了值得信赖的下一代。", weight:10},
       {text:"你隐居在城市边缘的一处小屋里，偶尔还是会有慕名而来的年轻觉醒者登门请教。", weight:8},
       {text:"你与当年的宿敌——如今的老友，一起回忆起初次见面时那份说不清由来的敌意，两人相视大笑。", weight:6, cond:c=>hasFlag(c,"urbanpower_rival")},
@@ -5357,10 +5486,10 @@ const WORLD_EVENTS = {
       {text:"你与那几位素未谋面的远亲成了忘年交，时常聚在一起聊起这份奇妙的血脉传承。", weight:6, cond:c=>hasFlag(c,"urbanpower_lineage")},
       {text:"你把那位隐秘导师当年教给你的心得，原封不动地传授给了新一代的年轻觉醒者。", weight:6, cond:c=>hasFlag(c,"urbanpower_mentor")},
       {text:"你把揭露异能实验室秘密的全部经过写成了记录，作为这个圈子历史的一份重要见证。", weight:6, cond:c=>hasFlag(c,"urbanpower_lab_nearby")},
-      {choice:true, weight:5, repeatable:true, text:"一位神秘的科学家提出帮你诱发一次危险的『二次觉醒』，理论上能让你的异能与生命同时进化——但过程可能让你的身体彻底崩溃。", cond:c=>state.age>=(hasTag(c,"transcendent")?50:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
-        {label:"冒险诱发二次觉醒", riskyChance:0.25, lifespanBonus:20, successEffect:{wit:10,charm:4,power:2},
-         successResult:"二次觉醒在生死边缘成功了，你的精神力彻底突破了凡人的桎梏，实现了真正意义上的灵能飞升，身体与异能都被重塑，仿佛获得了新生。", successAchievement:"突破天命",
-         failResult:"觉醒过程中能量彻底失控，你的身体在剧烈的反噬中土崩瓦解。", failDeath:true, failDeathChance:0.6, failCause:"觉醒崩溃",
+      {choice:true, weight:5, repeatable:true, text:"一位神秘的科学家提出帮你诱发一次危险的『二次觉醒』，理论上能让你的异能与生命同时进化——但过程可能让你的身体彻底崩溃。", cond:c=>state.age>=(hasTag(c,"transcendent")?51:54) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?7:10)), options:[
+        {label:"冒险诱发二次觉醒", riskyChance:0.35, lifespanBonus:40, successEffect:{wit:10,charm:4,power:2},
+         successResult:"二次觉醒在生死边缘成功了，你的精神力彻底突破了凡人的桎梏，实现了真正意义上的灵能飞升，身体与异能都被重塑，仿佛获得了新生。", successAchievement:"突破天命", worldStateKey:"urbanpower_breakthrough", worldStateDelta:1,
+         failResult:"觉醒过程中能量彻底失控，你的身体在剧烈的反噬中土崩瓦解。", failDeath:true, failDeathChance:0.55, failCause:"觉醒崩溃",
          regressResult:"觉醒过程中能量一度彻底失控，你侥幸稳住了最后一丝心神，只是精神力大受损耗，异能也大不如前。", regressEffect:{wit:-2,charm:-1}, regressLifespanPenalty:5},
         {label:"只进行低风险的能量调理", riskyChance:0.75, lifespanBonus:8,
          successResult:"你只进行了低风险的能量调理，效果有限，却也稳妥地延长了几年寿命。",
@@ -5372,8 +5501,8 @@ const WORLD_EVENTS = {
         {label:"拒绝，带着秘密离去", result:"你拒绝了这个请求，选择带着这份秘密安然离去。", statEffect:{luck:1}},
         {label:"只留存一部分，有所保留", result:"你只同意留存一部分样本，多少留了个心眼。", statEffect:{charm:1}}
       ]},
-      {death:true, text:"灵能飞升后的力量终究不总是温顺听话，一次寻常的力量波动突然失控反噬，彻底带走了你的生命。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"力量反噬"},
-      {text:"突破之后，你身上散发出一种难以言喻的气场，寻常人光是靠近都会感到一丝莫名的敬畏。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"charm")>=8},
+      {death:true, text:"灵能飞升后的力量终究不总是温顺听话，一次寻常的力量波动突然失控反噬，彻底带走了你的生命。", weight:1, cond:c=>worldStateVal(c,"urbanpower_breakthrough")>=1, cause:"力量反噬"},
+      {text:"突破之后，你身上散发出一种难以言喻的气场，寻常人光是靠近都会感到一丝莫名的敬畏。", weight:6, cond:c=>worldStateVal(c,"urbanpower_breakthrough")>=1 && stat(c,"charm")>=8},
       {text:"这些年异能培训体系日渐开放，你亲眼见证了越来越多新觉醒者因此活得更加安稳。", weight:6, cond:c=>worldStateVal(c,"urbanpower_cityInfluence")>=2},
       {text:"异能资源始终被少数人把持，你看着普通觉醒者的处境愈发艰难，心里明白，这终究会激化矛盾。", weight:6, cond:c=>worldStateVal(c,"urbanpower_cityInfluence")<=-1}
     ]
@@ -5395,6 +5524,7 @@ const WORLD_EVENTS = {
       ], cond:c=>state.age<=1}
     ],
     youth:[
+      {choice:true, weight:6, text:"第一次正式上船，水手长问你想从哪个岗位干起。", options:[{label:"做瞭望手", result:"你做了桅杆顶上的瞭望手，练出了一双最先看见陆地与风暴的眼睛。", statEffect:{luck:1}},{label:"做帆缆手", result:"你做了甲板上的帆缆手，每天与风浪较劲，手掌磨出了厚厚的茧。", statEffect:{power:1}},{label:"做领航学徒", result:"你跟着老领航员学看星象与海图，脑子里渐渐装下了整片大海。", statEffect:{wit:1}}]},
       {text:"你偷偷溜上了一艘即将启航的商船，靠着机灵劲儿被船长留下来当了见习水手。", weight:10},
       {text:"你在一次风暴中协助船员们抢险，虽然吓得腿软，却也因此赢得了水手们的认可。", weight:8},
       {text:"你无意间从一位老水手那里听到了关于『海妖』的传说，从此对那片被称为禁海的区域充满了好奇。", weight:6},
@@ -5411,6 +5541,9 @@ const WORLD_EVENTS = {
       {text:"你自幼就跟着老水手在船上厮混，对海上的门道比同龄孩子熟悉得多。", weight:6, cond:c=>hasFlag(c,"pirates_early_sailor"), statEffect:{wit:1}}
     ],
     adult:[
+      {text:"一张从垂死老船长手里接过的残破海图——图上标注着『海神的宝库』，据说那里沉着历代所有葬身风暴的宝船。", weight:5, setFlag:"pirates_quest1"},
+      {choice:true, weight:6, text:"俘获的商船上有一名自称医生的乘客，镇定地问你要不要留下他。", options:[{label:"邀他入伙做船医", result:"你邀他做了船医，第一个月他就从鬼门关拉回来三个船员——全船再没人质疑你的眼光。", statEffect:{health:1}, setFlag:"pirates_doctor"},{label:"按行情收取赎金放人", result:"你按行情收了赎金放了人，临走时他给你留了一小盒备用药品，算是行医者的体面。", statEffect:{wealth:1}},{label:"连人带船一并放行", result:"你大手一挥连人带船都放了——那天你心情好，海上传闻你『盗亦有道』。", statEffect:{charm:1}}]},
+      {text:"你在甲板上养了一只会学人说话的鹦鹉，它最爱在你打牌输了的时候大声嚷嚷，全船人都笑作一团。", weight:6},
       {text:"你正式成为了一名独当一面的航海士，在船队里逐渐站稳了脚跟。", weight:10, achievement:"独当一面的航海士"},
       {text:"海上流传着一支神秘海盗团正在四处寻找传说中宝藏地图的消息，你隐隐觉得与自己有关。", weight:8},
       {text:"你申请到了一份官方的私掠许可证，从此可以名正言顺地在指定海域劫掠敌对势力的商船。", weight:6},
@@ -5437,6 +5570,9 @@ const WORLD_EVENTS = {
       ]}
     ],
     prime:[
+      {text:"半生的航行让你集齐了海图的另外两块残片——三图合一，宝库的位置指向了永夜风暴带的正中心。", weight:12, cond:c=>hasFlag(c,"pirates_quest1"), setFlag:"pirates_quest2"},
+      {text:"你在无风带的海面上看见了一场持续整夜的海市蜃楼——那不是任何已知的港口，而是一座灯火通明、高楼直插云霄的钢铁之城。", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
+      {text:"你的船在一场突如其来的风暴中被吹离了航线，却因此意外发现了一座标注在任何海图之外的小岛。", weight:6, cond:c=>stat(c,"luck")>=8, statEffect:{wealth:1}},
       {text:"你率领船队找到了传说中的宝藏岛，一夜之间成了整片海域最富有的船长。", weight:10, achievement:"寻宝船长"},
       {text:"你在海上建立起了自己的势力范围，各路商船都愿意花钱请你的船队护航。", weight:8},
       {choice:true, weight:6, text:"海域各方船队就『航道该共同维护还是各自为战』产生了分歧。", options:[
@@ -5457,6 +5593,10 @@ const WORLD_EVENTS = {
       ]}
     ],
     elder:[
+      {choice:true, weight:14, text:"永夜风暴带就在船首正前方——两百年来驶入它的船没有一艘回来过，而海图说，宝库就在风暴眼里。", cond:c=>hasFlag(c,"pirates_quest2"), options:[{label:"驶入永夜风暴带", riskyChance:0.4, lifespanBonus:15, successEffect:{luck:3,wealth:3}, successResult:"当船冲进风暴眼的那一刻，海面忽然平静如镜——月光下，数百艘沉船的桅杆从海底升起，像一片森林。你成了传说本身。", successAchievement:"毕生所求", failResult:"风暴带没有给你机会——你的船成了那片桅杆森林里最新的一棵。", failDeath:true, failDeathChance:0.32, failCause:"葬身风暴", regressResult:"主桅在风暴边缘折断，你们被吐了出来——船废了大半，三块海图残片也散落进了海里。", regressEffect:{wealth:-2,health:-1}},{label:"把海图封进漂流瓶", result:"你把合一的海图封进漂流瓶抛回了大海——让海神自己决定，下一个读到它的人配不配。", statEffect:{luck:2}}]},
+      {choice:true, weight:30, repeatable:true, text:"老水手临终前告诉你深海秘药真正的用法——沉入海渊最深处服下它，若海神认可你，便会赐下与海同寿的祝福。", cond:c=>worldStateVal(c,"pirates_breakthrough")===1 && state.age>=(hasTag(c,"transcendent")?56:62) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?3:5)), options:[{label:"沉入海渊服药", riskyChance:0.15, lifespanBonus:50, successEffect:{luck:3,health:2}, successResult:"海神认可了你——当你从海渊浮上来时，全身的伤疤都消失了，从此风暴绕着你的船走，岁月也绕着你走。", successAchievement:"二度超脱", worldStateKey:"pirates_breakthrough", worldStateDelta:1, failResult:"你沉入了海渊，再也没有浮上来。水手们说，那晚的海面安静得可怕。", failDeath:true, failDeathChance:0.55, failCause:"葬身海渊", regressResult:"海神拒绝了你，你被一股暖流托回了海面，捡回一条命，身体却大不如前。", regressEffect:{health:-3,luck:-2}, regressLifespanPenalty:22},{label:"不再冒险，安享余生", result:"你决定不再挑战命运的极限，安然接受岁月本来的模样。", statEffect:{luck:1}}]},
+      {text:"你退休后在港口开了间小酒馆，墙上挂着泛黄的旧海图，老船员们路过都要进来碰一杯。", weight:6},
+      {text:"当年入伙的那位船医陪着你的船队走过了无数风浪，船员们都说，这条船上最锋利的不是炮，是他那双手。", weight:6, cond:c=>hasFlag(c,"pirates_doctor"), statEffect:{health:1}},
       {text:"你把自己一生的航海日志整理成册，留给了后来的年轻水手当作航海指南。", weight:10},
       {text:"你在自己名下的一座海岛上安度晚年，偶尔还会望着大海，想起当年扬帆远航的日子。", weight:8},
       {text:"你把那张拼凑完整的家传海图重新誊抄了一份，作为传家宝留给了膝下的水手后辈。", weight:6, cond:c=>hasFlag(c,"pirates_map_complete")},
@@ -5465,9 +5605,9 @@ const WORLD_EVENTS = {
       {text:"你受邀最后一次出席海盗旗议会，各路船长纷纷起身，向你这位传奇致以最高的敬意。", weight:6, cond:c=>hasFlag(c,"pirates_council")},
       {text:"你把自己绘制多年的航海图整理成了一整套地图集，作为传家宝留给了后辈。", weight:6, cond:c=>hasFlag(c,"pirates_cartography")},
       {text:"你晚年时常受邀参加海上的婚礼，坐在贵宾席上，看着一对对新人，总会想起自己年轻时的岁月。", weight:6},
-      {choice:true, weight:5, repeatable:true, text:"一位神秘的老水手向你透露了一种传说中的深海秘药，据说能让人多活数十年——但这秘药同样以夺命闻名。", cond:c=>state.age>=(hasTag(c,"transcendent")?50:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
-        {label:"冒险服下深海秘药", riskyChance:0.25, lifespanBonus:20, successEffect:{power:10,luck:4,health:2},
-         successResult:"秘药在你体内发挥出了惊人的效果，你的身体状况大幅改善，仿佛年轻了十岁，一身筋骨也变得格外硬朗。", successAchievement:"突破天命",
+      {choice:true, weight:5, repeatable:true, text:"一位神秘的老水手向你透露了一种传说中的深海秘药，据说能让人多活数十年——但这秘药同样以夺命闻名。", cond:c=>state.age>=(hasTag(c,"transcendent")?52:58) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?8:12)), options:[
+        {label:"冒险服下深海秘药", riskyChance:0.25, lifespanBonus:35, successEffect:{power:10,luck:4,health:2},
+         successResult:"秘药在你体内发挥出了惊人的效果，你的身体状况大幅改善，仿佛年轻了十岁，一身筋骨也变得格外硬朗。", successAchievement:"突破天命", worldStateKey:"pirates_breakthrough", worldStateDelta:1,
          failResult:"秘药的毒性瞬间发作，你倒在了甲板上，再也没能起来。", failDeath:true, failDeathChance:0.6, failCause:"秘药中毒",
          regressResult:"秘药的毒性瞬间发作，你侥幸没有当场毒发身亡，只是这具身子骨从此落下了病根，再不如从前硬朗。", regressEffect:{power:-2,health:-2}, regressLifespanPenalty:5},
         {label:"只服用稀释后的少量秘药", riskyChance:0.75, lifespanBonus:8,
@@ -5485,8 +5625,8 @@ const WORLD_EVENTS = {
         {label:"葬于陆地，入土为安", result:"你选择葬于陆地，入土为安，好歹给自己找一处踏实的归处。", statEffect:{origin:1}},
         {label:"骨灰撒在两处，各留一半", result:"你决定骨灰撒在两处，海洋与陆地各留一半，两边都算是你的家。", statEffect:{charm:1}}
       ]},
-      {death:true, text:"深海秘药的余毒终究还是找上了门，在一个寻常的夜晚，你在睡梦中悄然离世，甲板上只留下一片安静的月光。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"余毒发作"},
-      {text:"突破之后，你的运气好得出奇，仿佛连大海本身都在庇护着你的船。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"luck")>=8},
+      {death:true, text:"深海秘药的余毒终究还是找上了门，在一个寻常的夜晚，你在睡梦中悄然离世，甲板上只留下一片安静的月光。", weight:1, cond:c=>worldStateVal(c,"pirates_breakthrough")>=1, cause:"余毒发作"},
+      {text:"突破之后，你的运气好得出奇，仿佛连大海本身都在庇护着你的船。", weight:6, cond:c=>worldStateVal(c,"pirates_breakthrough")>=1 && stat(c,"luck")>=8},
       {text:"这些年航道共同维护的默契渐渐形成，你亲眼见证了这片海域因此少了许多不必要的争斗。", weight:6, cond:c=>worldStateVal(c,"pirates_seaInfluence")>=2},
       {text:"各路船队始终各自为战，你看着这片海域年复一年地陷在纷争里，心里明白，这终究不是长久的活法。", weight:6, cond:c=>worldStateVal(c,"pirates_seaInfluence")<=-1}
     ]
@@ -5509,6 +5649,7 @@ const WORLD_EVENTS = {
       ], cond:c=>state.age<=1}
     ],
     youth:[
+      {choice:true, weight:6, text:"成年礼的试炼到了，长老给了你三种证明自己的方式。", options:[{label:"独自猎回一头巨熊", result:"你独自入山，三天后拖着一头巨熊回到部落，篝火边的欢呼声整夜未歇。", statEffect:{power:1}},{label:"远航寻回失落的圣物", result:"你驾着小船远航寻回了部落失落的圣物，长老说你是被诸神眷顾的孩子。", statEffect:{luck:1}},{label:"守夜圣坛七日", result:"你在圣坛独自守夜七日，风雪里悟出了许多平日想不明白的道理。", statEffect:{wit:1}}]},
       {text:"你被村中的战士长选中，开始学习使用战斧与长盾，稚嫩的手臂却渐渐有了力量。", weight:10},
       {text:"你在一次成年礼的试炼中表现优异，被族中长老称赞「颇有先祖遗风」。", weight:8},
       {text:"你在一次狼群袭击中被咬伤，伤口愈合后却隐隐觉得自己的感官比从前敏锐了许多，仿佛沾上了某种诅咒的痕迹。", weight:6, setFlag:"norse_wolf_curse"},
@@ -5526,6 +5667,9 @@ const WORLD_EVENTS = {
       {text:"你比同龄的孩子更早握起了武器，几年下来，身手已经隐隐超过了不少年长的伙伴。", weight:6, cond:c=>hasFlag(c,"norse_early_warrior"), statEffect:{power:1}}
     ],
     adult:[
+      {text:"部落的老先知临终前抓着你的手说：诸神黄昏的预言并不完整——真正的结局刻在世界树根须间的三块符文石上，找到它们，就能知晓诸神隐瞒的真相。", weight:5, setFlag:"norse_quest1"},
+      {choice:true, weight:6, text:"战后清点时，一名敌方部落的孤儿蜷在废墟里，整个北境已无他的容身之处。", options:[{label:"收养他如亲生骨肉", result:"你把他领回了家，像亲生骨肉一样抚养——血脉分敌我，孩子不分。", statEffect:{charm:1}, setFlag:"norse_orphan"},{label:"派人送回敌方部落", result:"你派了可靠的人把他送回了敌方部落的远亲那里，仁至义尽。", statEffect:{wit:1}},{label:"交给神殿抚养", result:"你把他交给了神殿——诸神座下，不问出身。", statEffect:{luck:1}}]},
+      {text:"你在长夜的篝火边学会了用古老的调子吟唱萨迦，部落的孩子们最爱缠着你讲那些英雄的故事。", weight:6},
       {text:"你正式成为了村落的战士，肩负起了守卫家园、抵御巨人袭扰的重任。", weight:10, achievement:"村落战士"},
       {text:"一位神秘的旅行者似乎对你格外关注，据说他见过世界树的根须。", weight:8},
       {choice:true, weight:6, text:"满月之夜，你体内那份狼性即将彻底失控，族人的性命危在旦夕，你必须做出选择。", cond:c=>hasFlag(c,"norse_wolf_curse"), options:[
@@ -5551,6 +5695,9 @@ const WORLD_EVENTS = {
       ]}
     ],
     prime:[
+      {text:"多年的远征让你寻回了两块符文石——最后一块，在冰霜巨人腹地的深渊祭坛上。", weight:12, cond:c=>hasFlag(c,"norse_quest1"), setFlag:"norse_quest2"},
+      {text:"一位盲眼的先知抓住你的手腕，浑浊的眼珠直直地『看』着你：『你的灵魂上有裂缝——你不是第一次活着，对吗？』", weight:1, achievement:"位面裂隙", statEffect:{luck:1}},
+      {text:"吟游诗人为你编了一首专属的战歌，如今北境的战士们冲锋时唱的就是你的名字。", weight:6, cond:c=>stat(c,"power")>=8, statEffect:{charm:1}},
       {text:"你在一场惨烈的战役中击退了入侵的巨人大军，被各部落尊为「巨人克星」。", weight:10, achievement:"巨人克星"},
       {text:"你被推举为部落联盟的战争统帅，肩负起了守护整片北境的重任。", weight:8},
       {choice:true, weight:6, text:"各部落就『该联合起来共御强敌还是各自为政』产生了分歧。", options:[
@@ -5571,6 +5718,10 @@ const WORLD_EVENTS = {
       {text:"你带领着那支远征队伍立下了赫赫战功，队伍里的战士们都心甘情愿地追随你。", weight:6, cond:c=>hasFlag(c,"norse_expedition")}
     ],
     elder:[
+      {choice:true, weight:14, text:"冰霜巨人的腹地就在雪原尽头——取回最后一块符文石，你将成为唯一知晓诸神黄昏真相的凡人。", cond:c=>hasFlag(c,"norse_quest2"), options:[{label:"远征巨人腹地", riskyChance:0.38, lifespanBonus:12, successEffect:{wit:3,power:2,luck:2}, successResult:"当三块符文石拼合的瞬间，真相如极光般在你眼前展开——原来诸神黄昏不是终结，而是重生。你把这个秘密刻成了新的萨迦，北境的长夜从此有了盼头。", successAchievement:"毕生所求", failResult:"巨人的守卫比传说中更古老——你倒在祭坛前的雪地里，手还朝着符文石的方向。", failDeath:true, failDeathChance:0.35, failCause:"陨落雪原", regressResult:"远征在深渊边缘折戟，你带着冻掉的两根手指撤回了部落——最后一块符文石，成了你余生梦里反复出现的形状。", regressEffect:{power:-2,health:-2}},{label:"将两块符文石献给神殿", result:"你把两块符文石献给了神殿，让祭司们世代守护——也许某天，会有更年轻的英雄走完这最后一程。", statEffect:{charm:1,wit:1}}]},
+      {choice:true, weight:30, repeatable:true, text:"献祭之后，先知说你已有资格追求最后的荣耀——半神化：饮下诸神的蜜酒，让凡人的血脉与神性交融。", cond:c=>worldStateVal(c,"norse_breakthrough")===1 && state.age>=(hasTag(c,"transcendent")?56:62) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?3:5)), options:[{label:"饮下诸神蜜酒", riskyChance:0.15, lifespanBonus:65, successEffect:{power:3,luck:3}, successResult:"交融成功——蜜酒的暖流淌过四肢百骸，你的血脉中从此流淌着一缕真正的神性，寿元与伤病都不再能轻易困住你。", successAchievement:"二度超脱", worldStateKey:"norse_breakthrough", worldStateDelta:1, failResult:"凡人的躯壳没能承受住神性的重量，你在灼热的白光中化为了飞灰。", failDeath:true, failDeathChance:0.55, failCause:"神性反噬", regressResult:"交融失败，神性被你的血脉排斥而出，你大病了整整一年才缓过来。", regressEffect:{power:-3,health:-2}, regressLifespanPenalty:22},{label:"不再冒险，安享余生", result:"你决定不再挑战命运的极限，安然接受岁月本来的模样。", statEffect:{luck:1}}]},
+      {text:"你晚年把毕生的战斗技艺刻成了符文石碑，立在训练场边，年轻战士们开练之前都会去摸一摸。", weight:6},
+      {text:"当年收养的那名敌方孤儿，如今成了两个部落之间和平的桥梁——长老们说，你收养的不是一个孩子，是整个北境未来的安宁。", weight:6, cond:c=>hasFlag(c,"norse_orphan"), statEffect:{charm:1}},
       {text:"你把自己一生的战斗经验编成了萨迦英雄叙事诗，由吟游诗人传唱至今。", weight:10},
       {text:"你在壁炉旁安享晚年，孙辈们围坐在你身边，缠着你讲述当年与巨人搏斗的往事。", weight:8},
       {text:"你把家传的符文石郑重地交给了族中最有天赋的年轻人，嘱咐他好好守护这份传承。", weight:6},
@@ -5579,9 +5730,9 @@ const WORLD_EVENTS = {
       {text:"你在生命的尽头，仿佛已经能看到英灵战宴的宴席在远处若隐若现，微笑着阖上了双眼。", weight:6},
       {text:"你把自己打造武器的手艺毫无保留地传给了村中最有天赋的年轻人，看着炉火不熄，心里踏实。", weight:6, cond:c=>hasFlag(c,"norse_smithing")},
       {text:"你在生命的尽头，仿佛又看到了当年那场极光占卜显示的抉择，如今终于尘埃落定，心中一片安然。", weight:6},
-      {choice:true, weight:5, repeatable:true, text:"一位年迈的先知告诉你，向奥丁献上一场凶险的献祭仪式，或许能换来延续的寿命——但奥丁的意志向来难以揣测。", cond:c=>state.age>=(hasTag(c,"transcendent")?50:60) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?10:15)), options:[
-        {label:"举行凶险的献祭仪式", riskyChance:0.25, lifespanBonus:20, successEffect:{power:10,wit:4,luck:2},
-         successResult:"奥丁似乎垂听了你的献祭，一股神秘的力量涌入你的身体，寿命被硬生生延续了下去，浑身也涌动着一股难以言喻的战意。", successAchievement:"突破天命",
+      {choice:true, weight:5, repeatable:true, text:"一位年迈的先知告诉你，向奥丁献上一场凶险的献祭仪式，或许能换来延续的寿命——但奥丁的意志向来难以揣测。", cond:c=>state.age>=(hasTag(c,"transcendent")?51:56) && (state.age-state.lastBreakthroughAge>=(hasTag(c,"transcendent")?8:12)), options:[
+        {label:"举行凶险的献祭仪式", riskyChance:0.28, lifespanBonus:45, successEffect:{power:10,wit:4,luck:2},
+         successResult:"奥丁似乎垂听了你的献祭，一股神秘的力量涌入你的身体，寿命被硬生生延续了下去，浑身也涌动着一股难以言喻的战意。", successAchievement:"突破天命", worldStateKey:"norse_breakthrough", worldStateDelta:1,
          failResult:"奥丁的意志无情地降下，献祭台上，你的生命瞬间被彻底夺走。", failDeath:true, failDeathChance:0.6, failCause:"献祭反噬",
          regressResult:"奥丁的意志无情地降下，你侥幸没有被彻底夺去性命，只是那份反噬之力让你元气大伤，往日的勇武大不如前。", regressEffect:{power:-2,health:-1}, regressLifespanPenalty:5},
         {label:"只献上简单的祭品", riskyChance:0.75, lifespanBonus:8,
@@ -5594,8 +5745,8 @@ const WORLD_EVENTS = {
         {label:"平静安然，含笑迎接", result:"你平静安然地含笑迎接了女武神，没有半分不舍，只有满足。", statEffect:{luck:1}},
         {label:"召集族人共同送行", result:"你召集了族人共同送行，让这最后一程，也充满了族人的陪伴与祝福。", statEffect:{charm:1}}
       ]},
-      {death:true, text:"奥丁的赐予终究是有代价的，在某个寻常的日子，那份力量突然被收回，带走了你的生命。", weight:1, cond:c=>state.breakthroughCount>=1, cause:"神赐收回"},
-      {text:"突破之后，你在战场上几乎无人能挡，年轻战士们都以能与你并肩作战为荣。", weight:6, cond:c=>state.breakthroughCount>=1 && stat(c,"power")>=8},
+      {death:true, text:"奥丁的赐予终究是有代价的，在某个寻常的日子，那份力量突然被收回，带走了你的生命。", weight:1, cond:c=>worldStateVal(c,"norse_breakthrough")>=1, cause:"神赐收回"},
+      {text:"突破之后，你在战场上几乎无人能挡，年轻战士们都以能与你并肩作战为荣。", weight:6, cond:c=>worldStateVal(c,"norse_breakthrough")>=1 && stat(c,"power")>=8},
       {text:"这些年部落联盟的默契渐渐深厚，你亲眼见证了北境因此少了许多本可以避免的伤亡。", weight:6, cond:c=>worldStateVal(c,"norse_tribeInfluence")>=2},
       {text:"各部落始终各自为政，你看着强敌年复一年地蚕食着这片土地，心里明白，这终究不是长久之计。", weight:6, cond:c=>worldStateVal(c,"norse_tribeInfluence")<=-1}
     ]
@@ -5923,16 +6074,19 @@ function render(){
 /* 首页展示的"扫码开始游戏"二维码，固定指向游戏的正式部署地址。
    只在首次用到时生成一次并缓存下来，避免每次重新渲染首页都重复计算。 */
 const START_GAME_URL = "https://lighting1130.github.io/isekai-restart/";
-let _startGameQRDataUrl = null;
-function getStartGameQRDataUrl(){
-  if(_startGameQRDataUrl) return _startGameQRDataUrl;
+let _startGameQRSvg = null;
+function getStartGameQRSvg(){
+  if(_startGameQRSvg) return _startGameQRSvg;
   try{
     const qr = qrcode(0, "M");
     qr.addData(START_GAME_URL);
     qr.make();
-    _startGameQRDataUrl = qr.createDataURL(6, 4);
-  }catch(e){ _startGameQRDataUrl = null; }
-  return _startGameQRDataUrl;
+    // 用内嵌SVG而不是createDataURL生成的GIF格式data URL：
+    // 手写的GIF编码器在个别手机浏览器上解码不稳定，是二维码显示不出来的常见原因；
+    // SVG是标准的HTML元素，直接嵌进页面里，不需要额外的图片解码步骤，兼容性要可靠得多。
+    _startGameQRSvg = qr.createSvgTag({cellSize:4, margin:8});
+  }catch(e){ _startGameQRSvg = null; }
+  return _startGameQRSvg;
 }
 
 function renderIntro(){
@@ -5946,10 +6100,10 @@ function renderIntro(){
         ? `<div>再经历 <b>${nextMilestone.lives-mp.totalLivesCompleted}</b> 局解锁「${nextMilestone.name}」：${nextMilestone.desc}</div>`
         : `<div>已解锁全部局外成长里程碑</div>`}
     </div>`;
-  const qrDataUrl = getStartGameQRDataUrl();
-  const qrHtml = qrDataUrl
+  const qrSvg = getStartGameQRSvg();
+  const qrHtml = qrSvg
     ? `<div class="start-qr-box">
-        <img src="${qrDataUrl}" alt="扫码开始游戏" width="120" height="120" />
+        <div class="start-qr-svg">${qrSvg}</div>
         <div class="start-qr-caption">扫码，在其他设备上开始游戏</div>
       </div>`
     : "";
@@ -6151,10 +6305,10 @@ function renderEnding(){
     ? `<div class="new-unlock-banner">🌀 局外成长里程碑达成：${state.newlyUnlockedMilestones.map(m=>`「${m.name}」`).join("、")}——${state.newlyUnlockedMilestones.map(m=>m.desc).join(" ")}</div>`
     : "";
 
-  const endingQrDataUrl = getStartGameQRDataUrl();
-  const endingQrHtml = endingQrDataUrl
+  const endingQrSvg = getStartGameQRSvg();
+  const endingQrHtml = endingQrSvg
     ? `<div class="start-qr-box">
-        <img src="${endingQrDataUrl}" alt="扫码开始游戏" width="120" height="120" />
+        <div class="start-qr-svg">${endingQrSvg}</div>
         <div class="start-qr-caption">把这段异世界人生分享给朋友，扫码开始属于他们自己的故事</div>
       </div>`
     : "";
@@ -6416,7 +6570,11 @@ function startTalentDraw(){
   prepareRound(0);
 }
 function availableTalentPool(){
-  return TALENTS.filter(t=> (!t.world || t.world===state.worldview.id) && (!t.requiresMeta || hasMetaMilestone(t.requiresMeta)));
+  const lockedGender = state.reincarnation && state.reincarnation.gender;
+  return TALENTS.filter(t=> (!t.world || t.world===state.worldview.id)
+    && (!t.requiresMeta || hasMetaMilestone(t.requiresMeta))
+    && !(lockedGender==="female" && t.tags && t.tags.includes("male_confirmed"))
+    && !(lockedGender==="male" && t.tags && t.tags.includes("female_confirmed")));
 }
 function prepareRound(idx){
   // 已选天赋中若声明了互斥关系（如"男儿身"与"女儿身"），需要把互斥的那一项也从候选池中剔除，
@@ -6477,18 +6635,46 @@ function stageForAge(age){
   if(age<=50) return "prime";
   return "elder";
 }
+/* 各世界观的自然寿命基线：[基础岁数, 随机浮动范围]。
+   低魔/严酷世界回归其时代与环境应有的正常寿数（19世纪西部、维京时代、末世废土），
+   高魔/高科技世界则因治愈魔法或未来医疗而更长寿；
+   修仙界灵气充沛，连凡人都比别处长寿——而真正修炼有成者，
+   寿元会随境界层层叠加（筑基百余岁、金丹两百余、元婴四百余、化神近千、大乘近两千），
+   这正是修仙者与凡人的根本分野。 */
+const WORLD_BASE_LIFESPAN = {
+  qixiu:      [95, 15],  // 灵气充沛，凡人亦寿
+  magic:      [85, 15],  // 治愈魔法普及
+  scifi:      [95, 20],  // 未来医疗
+  warhammer:  [70, 15],  // 残酷的帝国，战争与劳役
+  yaoguai:    [80, 15],  // 山野灵秀之地
+  cyberpunk:  [68, 15],  // 废土污染与暴力
+  steampunk:  [75, 15],  // 工业烟尘弥漫
+  zombie:     [62, 14],  // 末世，活着已是奢侈
+  westworld:  [72, 14],  // 19世纪边疆的正常寿数
+  urbanpower: [82, 14],  // 现代医疗水平
+  pirates:    [66, 15],  // 大航海时代，海上凶险
+  norse:      [70, 15]   // 维京时代的凛冬与征战
+};
+
 function deathChance(age, ctx){
+  /* 衰老带来的死亡风险不再按绝对年龄计算，而是按"活到了当前寿限的几成"来计算——
+     寿限由所在世界的自然基线加上历次突破累积的寿元共同决定。
+     这样一来，凡人到七八十岁风险陡增是正常衰老；而突破重塑了肉身的修士，
+     一百岁不过是漫长寿元的青壮年，自然不该按凡人的迟暮来算风险。 */
+  const baseLife = (WORLD_BASE_LIFESPAN[ctx.world] || [78, 18])[0];
+  const span = baseLife + state.lifespanBonus;
+  const ratio = age / span;
   let base;
   if(age<16) base=0.004;
-  else if(age<=50) base=0.006;
-  else base = 0.010 + (age-50)*0.006;
+  else if(ratio<=0.62) base=0.006;
+  else base = 0.010 + (ratio-0.62)*0.55;
   const powerLuck = (ctx.stats.power + ctx.stats.luck)/2;
   base *= Math.max(0.25, 1 - (powerLuck-5)*0.06);
   // 健康值同样直接影响意外死亡概率：体弱多病的人更容易遭遇不测，身强体健则更容易化险为夷
   const health = ctx.stats.health!==undefined ? ctx.stats.health : 5;
   base *= Math.max(0.4, 1 - (health-5)*0.08);
   // 每一次成功突破寿元上限，都意味着肉身/存在状态被彻底重塑，往后的岁月里也更加不容易死于意外
-  base *= Math.max(0.2, 1 - state.breakthroughCount*0.25);
+  base *= Math.max(0.1, 1 - state.breakthroughCount*0.22);
   return Math.min(base, 0.6);
 }
 
@@ -6514,7 +6700,8 @@ function startSimulation(){
   state.worldState = {}; // 每一局重新开始，世界的变化也从零累积
   // 性别默认随机决定；若持有"男儿身"/"女儿身"这类命运天赋，则直接锁定对应性别，不再随机
   const tagSet = tags;
-  if(tagSet.has("male_confirmed")) state.gender = "male";
+  if(state.reincarnation.gender) state.gender = state.reincarnation.gender; // 投胎方式本身限定性别时（如女武神战士），以此为准
+  else if(tagSet.has("male_confirmed")) state.gender = "male";
   else if(tagSet.has("female_confirmed")) state.gender = "female";
   else state.gender = Math.random()<0.5 ? "male" : "female";
   state.ctx = { stats: state.stats, tags, world: state.worldview.id, flags: state.flags, gender: state.gender, worldState: state.worldState };
@@ -6544,8 +6731,9 @@ function triggerReincarnation(carryMemory){
   const reincOptions = REINCARNATIONS_BY_WORLD[world.id];
   const newReinc = reincOptions[rnd(reincOptions.length)];
 
-  // 转世投入了一具全新的躯体，性别也会重新决定——除非命运天赋锁定了固定的性别
-  if(state.ctx.tags.has("male_confirmed")) state.gender = "male";
+  // 转世投入了一具全新的躯体，性别也会重新决定——投胎方式限定性别时以其为准，其次是命运天赋
+  if(newReinc.gender) state.gender = newReinc.gender;
+  else if(state.ctx.tags.has("male_confirmed")) state.gender = "male";
   else if(state.ctx.tags.has("female_confirmed")) state.gender = "female";
   else state.gender = Math.random()<0.5 ? "male" : "female";
   state.ctx.gender = state.gender;
@@ -6608,6 +6796,12 @@ function triggerCrossWorldTransmigration(){
 
   state.worldview = newWorld;
   state.reincarnation = newReinc;
+  // 灵魂重生是彻底的新生，若新投胎方式限定了性别（如女武神战士），性别随之确定；
+  // 肉体穿越与灵魂附身则延续现有躯体/宿体的既定性别，不做改动。
+  if(mode === "reborn" && newReinc.gender){
+    state.gender = newReinc.gender;
+    state.ctx.gender = state.gender;
+  }
   state.ctx.world = newWorld.id;
   state.worldsVisitedThisLife.add(newWorld.id);
   state.age = newAge;
@@ -6641,7 +6835,8 @@ function stepAge(){
   if(!state.alive || state.finished) return;
 
   state.age++;
-  const maxNaturalAge = 78 + rnd(18) + state.lifespanBonus;
+  const baseLife = WORLD_BASE_LIFESPAN[state.ctx.world] || [78, 18];
+  const maxNaturalAge = baseLife[0] + rnd(baseLife[1]) + state.lifespanBonus;
 
   // natural end
   if(state.age >= maxNaturalAge){
